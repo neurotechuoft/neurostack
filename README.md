@@ -1,5 +1,7 @@
 # Neurostack
 
+**(In development)**
+
 Streaming brain waves to machine learning services, made easy.
 
 ```python
