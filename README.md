@@ -11,7 +11,7 @@ import neurostack.devices as devices
 if __name__ == "main":
 
     neurostack = Neurostack(
-        device = devices.OpenBCI,
+        device = devices.OpenBCI(),
         subscribers = [
             mmc_socket_connection,
             p300_socket_connection,
@@ -44,7 +44,7 @@ Start streaming EEG from device, and publish data to subscribers.
 
 ***stop()***
 
-Stop streaming EEG data from device, and stop publishing data to subscribers. Connection to device remains intact, and device is not turn off.
+Stop streaming EEG data from device, and stop publishing data to subscribers. Connection to device remains intact, and device is not turned off.
 
 ***shutdown()***
 
