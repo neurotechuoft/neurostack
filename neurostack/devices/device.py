@@ -3,12 +3,12 @@ from abc import ABC, abstractmethod
 
 class Device(ABC):
 
-    def __init__(self):
+    def __init__(self, device_id=None):
         pass
 
     @abstractmethod
     @staticmethod
-    def available_devices(self) -> []:
+    def available_devices() -> []:
         """
         Return a list of devices available to connect to on particular computer.
 

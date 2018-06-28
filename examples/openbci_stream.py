@@ -1,11 +1,15 @@
 import neurostack.devices as devices
 from neurostack import Neurostack
 
-if __name__ == "main":
-    openbcis = devices.OpenBCI.available_devices()
+
+def main():
+    openbci_ids = devices.OpenBCI.available_devices()
+
+    if openbci_ids is None:
+        return
 
     neurostack = Neurostack(
-        device=devices.OpenBCI(),
+        device=devices.OpenBCI(openbci_ids[0]),
         subscribers=[
             mmc_socket_connection,
             p300_socket_connection,
@@ -16,3 +20,7 @@ if __name__ == "main":
     )
 
     neurostack.start()
+
+
+if __name__ == "main":
+    main()
