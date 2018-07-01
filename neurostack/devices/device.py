@@ -59,3 +59,12 @@ class Device(ABC):
         :return:
         """
         pass
+
+    @abstractmethod
+    def get_info(self) -> None:
+        """
+        Get information about the device including device type, connection type, electrode names, device type, stream time, etc... 
+
+        :return:
+        """
+        pass
