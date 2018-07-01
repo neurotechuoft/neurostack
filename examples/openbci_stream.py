@@ -9,7 +9,9 @@ def main():
         return
 
     neurostack = Neurostack(
-        device=devices.OpenBCI(openbci_ids[0]),
+        devices=[
+            devices.OpenBCI(openbci_ids[0]),
+        ],
         subscribers=[
             mmc_socket_connection,
             p300_socket_connection,

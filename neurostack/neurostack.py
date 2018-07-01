@@ -1,35 +1,53 @@
 class Neurostack():
 
-    def __init__(self, device, subscribers=None, tags=None):
+    def __init__(self, devices, subscribers=None, tags=None):
         """
         Initialize a connection with an EEG device, and sets up an
         asynchronous connection with subscribers passed in.
 
-        :param device:
+        :param device: [Devices]
         :param subscribers:
         :param tags:
         """
-        self.device = device
+        self.devices = devices
         self.subscribers = subscribers
         self.tags = tags
 
-    def start(self):
+    def start(self, list_of_devices=None):
         """
         Start streaming EEG from device, and publish data to subscribers.
 
+        :param list_of_devices: [Device] List of devices to start streaming. If
+        none, all devices will start streaming.
         :return: None
         """
-        pass
 
-    def stop(self):
+        if list_of_devices is None:
+            devices_to_start = self.devices
+        else:
+            devices_to_start = list_of_devices
+
+        for device in devices_to_start:
+            device.start()
+
+    def stop(self, list_of_devices=None):
         """
         Stop streaming EEG data from device, and stop publishing data to
         subscribers. Connection to device remains intact, and device is not
         turned off.
 
+        :param list_of_devices: [Device] List of devices to stop streaming. If
+        none, all devices will stop streaming.
+
         :return: None
         """
-        pass
+        if list_of_devices is None:
+            devices_to_start = self.devices
+        else:
+            devices_to_start = list_of_devices
+
+        for device in devices_to_start:
+            device.stop()
 
     def shutdown(self):
         """
