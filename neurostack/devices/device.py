@@ -3,8 +3,11 @@ from abc import ABC, abstractmethod
 
 class Device(ABC):
 
-    def __init__(self, device_id=None):
-        pass
+    def __init__(self, device_id=None, connect=True):
+        self.device_id = device_id
+
+        if connect:
+            self.connect(device_id)
 
     @abstractmethod
     @staticmethod
