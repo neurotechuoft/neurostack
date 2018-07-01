@@ -33,8 +33,27 @@ class Neurostack():
 
     def shutdown(self):
         """
-        Close connection to device, WebSocket connections to publishers, and tag sources.
+        Close connection to device, WebSocket connections to publishers, and tag
+        sources.
 
         :return: None
+        """
+        pass
+
+    def get_subscribers(self) -> []:
+        """
+        Return list of websocket subscribers that currently receive data from
+        this neurostack.
+
+        :return:
+        """
+        pass
+
+    def print_subscribers(self) -> str:
+        """
+        Return string representation of websocket subscribers that currently
+        receive data from this neurostack.
+
+        :return:
         """
         pass
