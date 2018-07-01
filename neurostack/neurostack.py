@@ -72,6 +72,22 @@ class Neurostack():
         Return string representation of websocket subscribers that currently
         receive data from this neurostack.
 
-        :return:
+        :return:  
         """
         pass
+    
+    def get_info(self, list_of_devices=None) -> []:
+        """
+        Return list of string representations of device info for specified devices (by calling get_info of each device). 
+        By default lists info of all devices under Neurostack. 
+        
+        :return: 
+        """
+        if list_of_devices is None:
+            devices_to_start = self.devices
+        else:
+            devices_to_start = list_of_devices
+
+        info = [device.get_info() for device in devices_to_start]
+        return info
+        
