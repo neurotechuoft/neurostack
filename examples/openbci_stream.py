@@ -3,7 +3,9 @@ from neurostack import Neurostack
 
 
 def main():
-    openbci_ids = devices.OpenBCI.available_devices()
+    # openbci_ids = devices.OpenBCI.available_devices()
+    openbci_ids = []
+    devices.OpenBCI.available_devices(openbci_ids)
 
     if openbci_ids is None:
         return

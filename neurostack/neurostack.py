@@ -1,6 +1,14 @@
 class Neurostack():
 
     def __init__(self, device, subscribers=None, tags=None):
+        """
+        Initialize a connection with an EEG device, and sets up an
+        asynchronous connection with subscribers passed in.
+
+        :param device:
+        :param subscribers:
+        :param tags:
+        """
         self.device = device
         self.subscribers = subscribers
         self.tags = tags
