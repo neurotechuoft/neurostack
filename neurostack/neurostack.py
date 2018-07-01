@@ -49,7 +49,10 @@ class Neurostack():
         for device in devices_to_start:
             device.stop()
 
-    def shutdown(self):
+    def shutdown(self,
+                 list_of_devices=None,
+                 list_of_subscribers=None,
+                 list_of_tags=None):
         """
         Close connection to device, WebSocket connections to publishers, and tag
         sources.
