@@ -17,8 +17,8 @@ class Neurostack():
         """
         Start streaming EEG from device, and publish data to subscribers.
 
-        :param list_of_devices: [Device] List of devices to start streaming. If
-        none, all devices will start streaming.
+        :param list_of_devices: [Device] List of devices to start streaming. If none, all devices will start streaming.
+
         :return: None
         """
 
@@ -36,8 +36,7 @@ class Neurostack():
         subscribers. Connection to device remains intact, and device is not
         turned off.
 
-        :param list_of_devices: [Device] List of devices to stop streaming. If
-        none, all devices will stop streaming.
+        :param list_of_devices: [Device] List of devices to stop streaming. If none, all devices will stop streaming.
 
         :return: None
         """
@@ -54,8 +53,7 @@ class Neurostack():
                  list_of_subscribers=None,
                  list_of_tags=None):
         """
-        Close connection to device, WebSocket connections to publishers, and tag
-        sources.
+        Close connection to device, WebSocket connections to publishers, and tag sources.
 
         :return: None
         """
@@ -63,8 +61,7 @@ class Neurostack():
 
     def get_subscribers(self) -> []:
         """
-        Return list of websocket subscribers that currently receive data from
-        this neurostack.
+        Return list of websocket subscribers that currently receive data from this neurostack.
 
         :return:
         """
@@ -72,8 +69,7 @@ class Neurostack():
 
     def print_subscribers(self) -> str:
         """
-        Return string representation of websocket subscribers that currently
-        receive data from this neurostack.
+        Return string representation of websocket subscribers that currently receive data from this neurostack.
 
         :return:  
         """
