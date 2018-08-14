@@ -12,12 +12,12 @@ if __name__ == "main":
 
     neurostack = Neurostack(
         device = devices.OpenBCI(),
+        tags = [
+            ui_tag,
+        ],
         subscribers = [
             mmc_socket_connection,
             p300_socket_connection,
-        ],
-        tags = [
-            ui_tag,
         ]
     )
 
