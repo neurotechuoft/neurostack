@@ -12,12 +12,12 @@ def main():
         devices=[
             devices.OpenBCI(openbci_ids[0]),
         ],
+        tags=[
+            ui_tag,
+        ],
         subscribers=[
             mmc_socket_connection,
             p300_socket_connection,
-        ],
-        tags=[
-            ui_tag,
         ]
     )
 
