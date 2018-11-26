@@ -7,10 +7,10 @@ class Device(ABC):
         self.device_id = device_id
 
         if connect:
-            self.connect(device_id)
+            self.connect()
 
-    @abstractmethod
     @staticmethod
+    @abstractmethod
     def available_devices() -> []:
         """
         Return a list of devices available to connect to on particular computer.
@@ -20,7 +20,7 @@ class Device(ABC):
         pass
 
     @abstractmethod
-    def connect(self, device_id=None) -> None:
+    def connect(self) -> None:
         """
         Connect to EEG device with id specified. If id is not specified,
         connect to randomly selected EEG device.

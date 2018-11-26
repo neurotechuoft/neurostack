@@ -1,3 +1,6 @@
+from neurostack_server import NeurostackServer
+
+
 class Neurostack():
 
     def __init__(self, devices, subscribers=None, tags=None):
@@ -12,6 +15,8 @@ class Neurostack():
         self.devices = devices
         self.subscribers = subscribers
         self.tags = tags
+
+        self.socketio_server = NeurostackServer()
 
     def start(self, list_of_devices=None):
         """

@@ -1,5 +1,6 @@
-import openbci
+import usb.core
 
+import openbci
 from devices.device import Device
 
 
@@ -15,18 +16,18 @@ class OpenBCI(Device):
         
         Works on Linux, untested for other OS
         """
-        # devs = usb.core.find(find_all=True, idVendor=0x0403, idProduct=0x6015)
-        # openBCI_devices = []
+        devs = usb.core.find(find_all=True, idVendor=0x0403, idProduct=0x6015)
+        openBCI_devices = []
 
-        # for device in devs:
-        #     if device.manufacturer == "FTDI":   # must be run with sudo to see manufacturer
-        #         openBCI_devices.append(device.product) # append USB name
+        for device in devs:
+            if device.manufacturer == "FTDI":  # must be run with sudo to see manufacturer
+                openBCI_devices.append(device.product)  # append USB name
 
-        # return openBCI_devices
+        return openBCI_devices
 
-        pass  # OpenBCICyton does it internally
+        # pass  # OpenBCICyton does it internally
 
-    def connect(self, device_id=None):
+    def connect(self):
         """
         Connect to EEG device with id specified. If id is not specified,
         connect to randomly selected EEG device.
@@ -34,7 +35,13 @@ class OpenBCI(Device):
         :param device_id:
         :return:
         """
-        self.openbci_cyton = openbci.OpenBCICyton()
+        print(self.device_id)
+        if self.device_id is not None:
+            print("Not none")
+            self.openbci_cyton = openbci.OpenBCICyton(port=self.device_id,
+                                                      timeout=2)
+        else:
+            self.openbci_cyton = openbci.OpenBCICyton(timeout=2)
 
     def start(self) -> None:
         """
@@ -42,7 +49,8 @@ class OpenBCI(Device):
     
         :return:
         """
-        self.openbci_cyton.start_streaming(callback)
+        self.openbci_cyton.start_streaming(print)
+        pass
 
     def stop(self) -> None:
         """
