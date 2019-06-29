@@ -26,11 +26,12 @@ class BaseStream(object):
         Args:
             inlet : a pylsl.StreamInlet or in other words a LabStreamingLayer inlet of data.
         """
-        while not self._kill_signal.is_set() and not self._stop:
-            sample, timestamp = inlet.pull_sample()
-            time_correction = inlet.time_correction()
-            sample.append(timestamp + time_correction)
-            self._update(sample)
+        while not self._kill_signal.is_set():
+            if not self._stop:
+                sample, timestamp = inlet.pull_sample()
+                time_correction = inlet.time_correction()
+                sample.append(timestamp + time_correction)
+                self._update(sample)
 
     def start(self):
         """ Unsuspends data stream """

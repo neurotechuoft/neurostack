@@ -7,14 +7,18 @@ import warnings
 class Muse(Device):
 
     def __init__(self, device_id=None):
-        super().__init__(device_id=device_id)
+        super().__init__(device_id)
         self.streams = {}
+
+    @staticmethod
+    def available_devices():
+        pass
 
     #
     # Private device methods for handling data streams and server connections
     #
 
-    def _create_eeg_stream():
+    def _create_eeg_stream(self):
         return EEGStream(thread_name='EEG_data', event_channel_name='P300')
 
     #

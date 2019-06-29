@@ -6,6 +6,7 @@ class Device(ABC):
     def __init__(self, device_id=None):
         self.device_id = device_id
 
+    @staticmethod
     @abstractmethod
     def available_devices() -> []:
         """
