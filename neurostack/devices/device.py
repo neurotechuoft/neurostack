@@ -3,11 +3,8 @@ from abc import ABC, abstractmethod
 
 class Device(ABC):
 
-    def __init__(self, device_id=None, connect=True):
+    def __init__(self, device_id=None):
         self.device_id = device_id
-
-        if connect:
-            self.connect(device_id)
 
     @abstractmethod
     @staticmethod
@@ -63,7 +60,7 @@ class Device(ABC):
     @abstractmethod
     def get_info(self) -> None:
         """
-        Get information about the device including device type, connection type, electrode names, device type, stream time, etc... 
+        Get information about the device including device type, connection type, electrode names, device type, stream time, etc...
 
         :return:
         """
