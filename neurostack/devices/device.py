@@ -7,7 +7,6 @@ class Device(ABC):
         self.device_id = device_id
 
     @abstractmethod
-    @staticmethod
     def available_devices() -> []:
         """
         Return a list of devices available to connect to on particular computer.

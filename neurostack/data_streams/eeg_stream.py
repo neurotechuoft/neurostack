@@ -2,7 +2,7 @@
 Contains classes which update their EEG and marker/stimulus data in real time over lsl. Pre-processes data and makes it
 available for analysis.
 """
-import base_stream
+from data_streams import BaseStream
 import numpy as np
 import pylsl
 from mne import create_info, Epochs, io
@@ -126,7 +126,7 @@ def make_events(data, marker_stream, marker_end, trial_num, event_duration=0):
         return np.array([[0, 0, 0]]), np.array([[0]]), np.array([[0]])
 
 
-class EEGStream(base_stream.BaseStream):
+class EEGStream(BaseStream):
     """Connects to eeg and markers streams.
     Also contains method for creating epochs of data to be used for prediction and training.
     Attributes:

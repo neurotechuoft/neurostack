@@ -1,4 +1,4 @@
-from data_streams import EEG_stream
+from data_streams import EEGStream
 from devices import Device
 
 import warnings
