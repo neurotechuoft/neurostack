@@ -67,15 +67,66 @@ class Muse(Device):
     # Methods for handling server communication
     #
 
-    def predict(self, uuid, eeg_data):
+    def send_predict_data(self, uuid, eeg_data):
         data = (uuid, eeg_data)
         self.socket_client.emit("retrieve_prediction_results", data, self.on_retrieve_prediction_results)
         self.socket_client.wait_for_callbacks(seconds=1)
 
-    def train(self, uuid, eeg_data, p300):
+    def send_train_data(self, uuid, eeg_data, p300):
         data = (uuid, eeg_data, p300)
         self.socket_client.emit("train_classifier", data, self.on_train_results)
         self.socket_client.wait_for_callbacks(seconds=1)
+
+    async def train(self, sid, args):
+        if not self.train_mode:
+            self.change_mode(train_mode=True)
+            time.sleep(.2)
+
+        args = json.loads(args)
+        uuid = args['uuid']
+        timestamp = args['timestamp']
+        p300 = args['p300']
+
+        timestamp -= self.time_diff
+        package = [
+            str(timestamp),
+            str(p300),      # target
+            str(1),         # 1 event total
+            str(uuid)       # take uuid for epoch id
+        ]
+        self.marker_outlet.push_sample(package)
+        await self.start_event_loop()
+
+        while len(self.train_results) == 0:
+            time.sleep(.1)
+        score = self.train_results.pop(0)
+        return sid, score
+
+    async def predict_handler(self, sid, args):
+        if self.train_mode:
+            self.change_mode(train_mode=False)
+            time.sleep(.2)
+
+        args = json.loads(args)
+        uuid = args['uuid']
+        timestamp = args['timestamp']
+
+        timestamp -= self.time_diff
+        package = [
+            str(timestamp),
+            str(0),         # target
+            str(1),         # 1 event total
+            str(uuid)       # take uuid for epoch id
+        ]
+        self.marker_outlet.push_sample(package)
+        await self.start_event_loop()
+
+        while len(self.pred_results) == 0:
+            time.sleep(.1)
+        pred = self.pred_results.pop(0)
+        uuid, p300, score = pred
+        results = {'uuid': uuid, 'p300': p300, 'score': score}
+        return sid, results
 
     #
     # Public device metods
