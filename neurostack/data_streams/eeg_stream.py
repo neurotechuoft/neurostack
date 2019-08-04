@@ -18,20 +18,7 @@ def look_for_eeg_stream():
     eeg_inlet = pylsl.StreamInlet(streams[0], max_chunklen=1)
 
     return eeg_inlet
-
-
-def look_for_markers_stream():
-    """returns an inlet for the first markers stream outlet if found."""
-    print("looking for a Markers stream")
-    marker_streams = pylsl.resolve_byprop('name', 'Markers', timeout=2)
-
-    if marker_streams:
-        marker_inlet = pylsl.StreamInlet(marker_streams[0])
-        return marker_inlet
-    else:
-        print("Can't find Markers stream")
-        return 0
-
+    
 
 def raw_filter(raw, low_f, high_f, picks):
     """Filters data with a bandpass 4th order butterworth filter.
@@ -263,17 +250,8 @@ class EEGStream(BaseStream):
         else:
             event_id = {'Target': 1}
 
-        # Plot power spectral density
-        # plot_psd(raw, 'std', picks=[0, 1, 2, 3])
-
-        # Notch filter
-        # notch_filter(raw, np.arange(50, 101, 50), picks=[0, 1, 2, 3])
-
         # bandpass filter the data between two ends of the filter_range
         raw_filter(raw, filter_range[0], filter_range[1], picks=[0, 1, 2, 3])
-
-        # plot raw data for visualization/validation
-        # plot(raw, events, duration=data_duration, n_channels=5, scalings='auto')
 
         return Epochs(raw, events, event_id=event_id, tmin=tmin, tmax=tmax,
                       baseline=baseline, picks=picks,
