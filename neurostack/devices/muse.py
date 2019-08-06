@@ -28,6 +28,10 @@ class Muse(Device):
         results=args[1]
         self.train_results.append(results)
 
+    def print_results(self, *args):
+        for arg in args:
+            print(arg)
+
     #
     # Private device methods for handling data streams
     #
@@ -127,6 +131,27 @@ class Muse(Device):
         uuid, p300, score = pred
         results = {'uuid': uuid, 'p300': p300, 'score': score}
         return sid, results
+
+    #
+    # Test functions
+    #
+
+    def send_predict_data_test(self, uuid, eeg_data):
+        args = {
+            'uuid': uuid,
+            'data': eeg_data
+        }
+        self.socket_client.emit("retrieve_prediction_results_test", args, self.print_results)
+        self.socket_client.wait_for_callbacks(seconds=1)
+
+    def send_train_data_test(self, uuid, eeg_data, p300):
+        args = {
+            'uuid': uuid,
+            'data': eeg_data,
+            'p300': p300
+        }
+        self.socket_client.emit("train_classifier_test", args, self.print_results)
+        self.socket_client.wait_for_callbacks(seconds=1)
 
     #
     # Public device metods

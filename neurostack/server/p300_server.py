@@ -147,34 +147,34 @@ class P300Service:
             return uuid, results
         return uuid, None
 
-    async def retrieve_prediction_results(self, sid, args):
+    async def retrieve_prediction_results(self, uuid, args):
         uuid, data = args
         data = np.array(data)
         data = np.expand_dims(data, axis=0)
 
         # load classifier if not already loaded
-        if self.clf.get(sid) is None:
-            self.clf[sid] = ml.load(f'clfs/{self.users[sid]["username"]}')
-        p300 = self.clf[sid].predict(data)
-        p300 = p300[0]
+        load_classifier()
+        p300 = self.clf[uuid].predict(data)[0]
 
         score = 1
         results = (uuid, p300, score)
-        return sid, results
+        return uuid, results
 
     # for testing
-    async def retrieve_prediction_results_test(self, sid, args):
-        uuid, eeg_data = args
-        p300 = random.choice([True, False])
-        score = random.random()
-        results = (uuid, p300, score)
-        return sid, results
+    async def retrieve_prediction_results_test(self, uuid, args):
+        results = {
+            'uuid': args['uuid'],
+            'p300': random.choice([True, False]),
+            'score': random.random()
+        }
+        return results
 
-    async def train_classifier_test(self, sid, args):
-        uuid, eeg_data, p300 = args
-        acc = random.random()
-        results = (uuid, acc)
-        return sid, results
+    async def train_classifier_test(self, uuid, args):
+        results = {
+            'uuid': args['uuid'],
+            'acc': random.random()
+        }
+        return results
 
     def initialize_handlers(self):
         # train classifier and predict
@@ -190,5 +190,5 @@ class P300Service:
 if __name__ == '__main__':
     service = P300Service()
     service.initialize_handlers()
-    # service.app.run(host='0.0.0.0', port=8001)
+
     service.app.run(host='localhost', port=8001)
