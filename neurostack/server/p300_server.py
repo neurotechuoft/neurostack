@@ -103,27 +103,31 @@ class P300Service:
                     )
                     return True
 
-            # Something went wrongx
+            # Something went wrong
             return False
 
-    async def load_classifier(self, uuid, args):
+    async def load_classifier(self, uuid):
         try:
-            self.clf[uuid] = ml.load(self.users[uuid]["weights"])
-            return uuid, True
+            if self.clf[uuid] is None:
+                self.clf[uuid] = ml.load(self.users[uuid]["weights"])
+            return True
         except FileNotFoundError:
-            raise Exception(f'Cannot load classifier')
+            print(f'Cannot load classifier')
+            return False
 
-    async def train_classifier(self, uuid, args):
-        eeg_data, p300 = args
+    async def train_classifier(self, sid, args):
+        uuid = args['uuid']
+        eeg_data = args['data']
+        p300 = args['p300']
 
         # initialize if empty
         self.inputs[uuid] = self.inputs.get(uuid, [])
         self.targets[uuid] = self.targets.get(uuid, [])
 
-        self.inputs[uuid].append(np.array(eeg_data))
+        self.inputs[uuid].append(np.array(data))
         self.targets[uuid].append(np.array(p300))
 
-        if len(self.targets[uuid]) % 10 == 0 and len(self.targets[uuid]) >= 20:
+        if len(self.targets[uuid]) % 10 == 0 and len(self.targets[uuid]) >= 30:
             X = np.array(self.inputs[uuid])
             y = np.array(self.targets[uuid])
 
@@ -143,25 +147,39 @@ class P300Service:
 
             self.update_weights(uuid=uuid, accuracy=acc, weights_path=f'clfs/{self.users[uuid]["username"]}')
 
-            results = (uuid, acc)
-            return uuid, results
-        return uuid, None
+            results = {
+                'uuid': args['uuid'],
+                'acc': acc
+            }
+            return results
+        return None
 
-    async def retrieve_prediction_results(self, uuid, args):
-        uuid, data = args
+    async def retrieve_prediction_results(self, sid, args):
+        uuid = args['uuid']
+        data = args['data']
+
+        # prepare data for prediction
         data = np.array(data)
         data = np.expand_dims(data, axis=0)
 
         # load classifier if not already loaded
-        load_classifier()
-        p300 = self.clf[uuid].predict(data)[0]
+        if load_classifier(uuid)
+            p300 = self.clf[uuid].predict(data)[0]
+        else:
+            raise Exception('Cannot load classifier and make prediction')
 
+        # currently we do not have a confidence method
         score = 1
-        results = (uuid, p300, score)
-        return uuid, results
+
+        results = {
+            'uuid': uuid,
+            'p300': p300,
+            'score': random.random()
+        }
+        return results
 
     # for testing
-    async def retrieve_prediction_results_test(self, uuid, args):
+    async def retrieve_prediction_results_test(self, sid, args):
         results = {
             'uuid': args['uuid'],
             'p300': random.choice([True, False]),
@@ -169,7 +187,7 @@ class P300Service:
         }
         return results
 
-    async def train_classifier_test(self, uuid, args):
+    async def train_classifier_test(self, sid, args):
         results = {
             'uuid': args['uuid'],
             'acc': random.random()

@@ -1,5 +1,6 @@
 from data_streams import EEGStream
 from devices import Device
+from socketIO_client import SocketIO
 
 import warnings
 
@@ -70,6 +71,13 @@ class Muse(Device):
     #
     # Methods for handling server communication
     #
+
+    def neurostack_connect(self, ip, port):
+        self.socket_client = SocketIO(ip, port)
+        self.socket_client.connect()
+
+    def neurostack_disconnect(self):
+        self.socket_client.disconnect()
 
     def send_predict_data(self, uuid, eeg_data):
         data = (uuid, eeg_data)
