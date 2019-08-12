@@ -1,9 +1,9 @@
 from sanic import Sanic
 import socketio
 import ml
-
 import numpy as np
 from sklearn.model_selection import train_test_split
+import uuid
 
 # for testing
 import random
@@ -35,6 +35,12 @@ def verify_password(stored_password, provided_password):
     pwdhash = binascii.hexlify(pwdhash).decode('ascii')
     return pwdhash == stored_password
 
+
+def generate_uuid():
+    """Generates a universally unique ID"""
+    # Completely random UUID; use uuid1() for a UUID based on host MAC address
+    # and current time
+    return uuid.uuid4()
 
 class P300Service:
     def __init__(self):
@@ -97,7 +103,11 @@ class P300Service:
                   }
 
         """
-        uuid = args['uuid']
+        # load arguments, generate UUID if none is provided
+        uuid = args.get(['uuid'])
+        if uuid is None:
+            uuid = generate_uuid()
+
         eeg_data = args['data']
         p300 = args['p300']
 
@@ -148,7 +158,11 @@ class P300Service:
                       'score': confidence value of prediction between 0 and 1
                   }
         """
-        uuid = args['uuid']
+        # load arguments, generate UUID if none is provided
+        uuid = args.get(['uuid'])
+        if uuid is None:
+            uuid = generate_uuid()
+            
         data = args['data']
 
         # prepare data for prediction
