@@ -16,7 +16,7 @@ import binascii
 
 
 def hash_password(password):
-    """Hash a password for storing."""
+    """Hash a password for storing"""
     salt = hashlib.sha256(os.urandom(60)).hexdigest().encode('ascii')
     pwdhash = hashlib.pbkdf2_hmac('sha512', password.encode('utf-8'),
                                   salt, 100000)
@@ -42,80 +42,61 @@ class P300Service:
         self.app = Sanic()
         self.sio.attach(self.app)
 
-        self.clf = {}
-        self.inputs = {}
+        self.clf = {}       # classifiers with UUID as key
+        self.inputs = {}    # training data with UUID as key
         self.targets = {}
 
-        self.last_uuid = {}
-        self.last_acc = {}
+    async def save_classifier(self, uuid):
+        """
+        Load classifier for client with given UUID into self.clf
 
-        self.users = {}
+        :param uuid: client UUID
+        :returns: True if classifier is successfully loaded, else False
+        """
+        if not os.path.exists('clfs'):
+            os.makedirs('clfs')
 
-    def update_weights(self, uuid, accuracy, weights_path):
-        engine = create_engine(os.environ['DATABASE_URL'])
-        with engine.begin() as connection:
+        if self.clf[uuid] is not None:
+            ml.save(f'clfs/{uuid}', self.clf[uuid])
+            return True
 
-            if uuid:
-                # Check whether there is a uuid in the database that matches the one given
-                uuid_exists = connection.execute(
-                    text('''
-                        SELECT
-                            w.id
-                        FROM user_weights w
-                        WHERE w.uuid = :uuid
-                    '''),
-                    uuid=uuid
-                ).fetchall()
-
-                # Update weights for uuid
-                if uuid_exists:
-                    connection.execute(
-                        text('''
-                            UPDATE user_weights
-                            SET
-                                accuracy = :accuracy,
-                                weights = :weights,
-                                last_updated = NOW()::TIMESTAMP
-                            WHERE
-                                uuid = :uuid
-                        '''),
-                        uuid=uuid,
-                        accuracy=accuracy,
-                        weights=weights_path
-                    )
-                    return True
-
-                # Create new entry in database with uuid
-                else:
-                    connection.execute(
-                        text('''
-                            INSERT INTO user_weights ("uuid", "accuracy", "weights", "last_updated")
-                            VALUES (
-                                :uuid,
-                                :accuracy,
-                                :weights,
-                                NOW()::TIMESTAMP
-                            )
-                        '''),
-                        uuid=uuid,
-                        accuracy=accuracy,
-                        weights=weights_path
-                    )
-                    return True
-
-            # Something went wrong
-            return False
+        return False
 
     async def load_classifier(self, uuid):
+        """
+        Load classifier for client with given UUID into self.clf
+
+        :param uuid: client UUID
+        :returns: True if classifier is successfully loaded, else False
+        """
         try:
             if self.clf[uuid] is None:
-                self.clf[uuid] = ml.load(self.users[uuid]["weights"])
+                self.clf[uuid] = ml.load(f'clfs/{uuid}')
             return True
         except FileNotFoundError:
             print(f'Cannot load classifier')
             return False
 
     async def train_classifier(self, sid, args):
+        """
+        Endpoint for training classifier--given enough data, will train
+        classifier
+
+        :param sid: Socket IO session ID, automatically given by connection
+        :param args: arguments from client. This should be in the format
+                     {
+                         'uuid': client UUID
+                         'data': EEG data to use for training
+                         'p300': True or False
+                     }
+        :returns: None if there is not enough data for training, or the current
+                  model accuracy in the format
+                  {
+                      'uuid': client UUID
+                      'acc': current training accuracy
+                  }
+
+        """
         uuid = args['uuid']
         eeg_data = args['data']
         p300 = args['p300']
@@ -140,21 +121,33 @@ class P300Service:
             self.clf[uuid] = ml.ml_classifier(X_train, y_train, classifier=None, pipeline='vect_lr')
             acc = self.clf[uuid].score(X_test, y_test)
 
-            # save classifier
-            if not os.path.exists('clfs'):
-                os.makedirs('clfs')
-            ml.save(f'clfs/{self.users[uuid]["username"]}', self.clf[uuid])
-
-            self.update_weights(uuid=uuid, accuracy=acc, weights_path=f'clfs/{self.users[uuid]["username"]}')
+            save_classifier(uuid)
 
             results = {
                 'uuid': args['uuid'],
                 'acc': acc
             }
             return results
+
         return None
 
     async def retrieve_prediction_results(self, sid, args):
+        """
+        Endpoint for making predictions with trained classifier
+
+        :param sid: Socket IO session ID, automatically given by connection
+        :param args: arguments from client. This should be in the format
+                     {
+                         'uuid': client UUID
+                         'data': EEG data to make prediction on
+                     }
+        :returns: prediction results in the format
+                  {
+                      'uuid': client UUID
+                      'p300': True or False result of model P300 prediction
+                      'score': confidence value of prediction between 0 and 1
+                  }
+        """
         uuid = args['uuid']
         data = args['data']
 
@@ -178,8 +171,23 @@ class P300Service:
         }
         return results
 
-    # for testing
+    #
+    # For testing
+    #
+
     async def retrieve_prediction_results_test(self, sid, args):
+        """
+        Tests endpoint for making predictions with trained classifier
+
+        :param sid: Socket IO session ID, automatically given by connection
+        :param args: arguments from client. This should be in the format
+                     {
+                         'uuid': client UUID
+                         'data': EEG data to make prediction on
+                     }
+        :returns: dummy prediction results, including a True or False for P300
+                  and a confidence score
+        """
         results = {
             'uuid': args['uuid'],
             'p300': random.choice([True, False]),
@@ -188,6 +196,18 @@ class P300Service:
         return results
 
     async def train_classifier_test(self, sid, args):
+        """
+        Tests endpoint for training classifier
+
+        :param sid: Socket IO session ID, automatically given by connection
+        :param args: arguments from client. This should be in the format
+                     {
+                         'uuid': client UUID
+                         'data': EEG data to use for training
+                         'p300': True or False
+                     }
+        :returns: dummy results of training
+        """
         results = {
             'uuid': args['uuid'],
             'acc': random.random()
@@ -195,6 +215,7 @@ class P300Service:
         return results
 
     def initialize_handlers(self):
+        """Initialize handlers for server"""
         # train classifier and predict
         self.sio.on("retrieve_prediction_results", self.retrieve_prediction_results)
         self.sio.on("train_classifier", self.train_classifier)

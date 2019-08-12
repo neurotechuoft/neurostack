@@ -22,14 +22,17 @@ class Muse(Device):
     #
 
     def on_retrieve_prediction_results(self, *args):
+        """Callback function for saving prediction results"""
         results=args[1]
         self.pred_results.append(results)
 
     def on_train_results(self, *args):
+        """Callback function for saving training results"""
         results=args[1]
         self.train_results.append(results)
 
     def print_results(self, *args):
+        """Test callback function that simply prints out the results"""
         for arg in args:
             print(arg)
 
@@ -38,18 +41,18 @@ class Muse(Device):
     #
 
     def _create_eeg_stream(self):
-        """ Creates a stream that streams EEG data """
+        """Creates a stream that streams EEG data"""
         return EEGStream(thread_name='EEG_data', event_channel_name='P300')
 
     def _create_marker_stream(self):
-        """ Create a stream that streams marker data """
+        """Create a stream that streams marker data"""
         info = pylsl.StreamInfo('Markers', 'Markers', 4, 0, 'string', 'mywid32')
         self.marker_outlet = pylsl.StreamOutlet(info)
         return MarkerStream(thread_name='Marker_stream')
 
     def _create_ml_stream(self, data):
-        """ Creates a stream that combines the EEG and marker streams, and
-        forms epochs based on timestamp """
+        """Creates a stream that combines the EEG and marker streams, and
+        forms epochs based on timestamp"""
         if self.streams.get('eeg') is None:
             raise Exception(f"EEG stream does not exist")
         if self.streams.get('marker') is None:
@@ -61,6 +64,7 @@ class Muse(Device):
                         train_epochs=data['train_epochs'])
 
     def _start_stream(self, stream):
+        """Starts stream given stream name (one of 'eeg', 'marker', or 'ml')"""
         if self.streams.get(stream) is None:
             raise RuntimeError("Cannot start {0} stream, stream does not exist".format(stream))
         elif stream == 'ml':
@@ -72,20 +76,48 @@ class Muse(Device):
     # Methods for handling server communication
     #
 
-    def neurostack_connect(self, ip, port):
+    def neurostack_connect(self, ip='35.222.93.233', port=8001):
+        """
+        Connects to neurostack server at ip:port. If no arguments for ip and
+        port are given, then connects to the default hardcoded address for a
+        server on the cloud.
+        """
         self.socket_client = SocketIO(ip, port)
         self.socket_client.connect()
 
     def neurostack_disconnect(self):
+        """Disconnects from neurostack server"""
         self.socket_client.disconnect()
 
     def send_predict_data(self, uuid, eeg_data):
-        data = (uuid, eeg_data)
+        """
+        Sneds prediction data to neurostack server
+
+        :param uuid: client's UUID
+        :param eeg_data: one sample of EEG data that we want to predict for
+        :returns: None
+        """
+        args = {
+            'uuid': uuid,
+            'data': eeg_data
+        }
         self.socket_client.emit("retrieve_prediction_results", data, self.on_retrieve_prediction_results)
         self.socket_client.wait_for_callbacks(seconds=1)
 
     def send_train_data(self, uuid, eeg_data, p300):
-        data = (uuid, eeg_data, p300)
+        """
+        Sends training data to neurostack server
+
+        :param uuid: client's UUID
+        :param eeg_data: one sample of EEG data to be used for training
+        :param p300: True if this data represents a p300 signal, else False
+        :returns: None
+        """
+        args = {
+            'uuid': uuid,
+            'data': eeg_data,
+            'p300': p300
+        }
         self.socket_client.emit("train_classifier", data, self.on_train_results)
         self.socket_client.wait_for_callbacks(seconds=1)
 
@@ -140,11 +172,14 @@ class Muse(Device):
         results = {'uuid': uuid, 'p300': p300, 'score': score}
         return sid, results
 
-    #
-    # Test functions
-    #
+    def send_predict_data(self, uuid, eeg_data):
+        """
+        Tests endpoint for sending prediction data to neurostack server
 
-    def send_predict_data_test(self, uuid, eeg_data):
+        :param uuid: client's UUID
+        :param eeg_data: one sample of EEG data that we want to predict for
+        :returns: None
+        """
         args = {
             'uuid': uuid,
             'data': eeg_data
@@ -152,7 +187,15 @@ class Muse(Device):
         self.socket_client.emit("retrieve_prediction_results_test", args, self.print_results)
         self.socket_client.wait_for_callbacks(seconds=1)
 
-    def send_train_data_test(self, uuid, eeg_data, p300):
+    def send_train_data(self, uuid, eeg_data, p300):
+        """
+        Tests endpoint for sending training data to neurostack server
+
+        :param uuid: client's UUID
+        :param eeg_data: one sample of EEG data to be used for training
+        :param p300: True if this data represents a p300 signal, else False
+        :returns: None
+        """
         args = {
             'uuid': uuid,
             'data': eeg_data,
