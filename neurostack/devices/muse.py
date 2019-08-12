@@ -12,6 +12,7 @@ class Muse(Device):
         self.streams = {}
         self.pred_results = []
         self.train_results = []
+        self.time_diff = 0  # difference between unix and muse time
 
     @staticmethod
     def available_devices():
@@ -72,21 +73,40 @@ class Muse(Device):
         else:
             self.streams[stream].lsl_connect()
 
+    def _stop_stream(self, stream):
+        """Stops stream given stream name (one of 'eeg', 'marker', or 'ml')"""
+        if self.streams.get(stream) is None:
+            raise RuntimeError("Cannot stop {0} stream, stream does not exist".format(stream))
+        else:
+            self.streams[stream].stop()
+
     #
     # Methods for handling server communication
     #
 
     def neurostack_connect(self, ip='35.222.93.233', port=8001):
         """
-        Connects to neurostack server at ip:port. If no arguments for ip and
-        port are given, then connects to the default hardcoded address for a
-        server on the cloud.
+        Connects to neurostack server at ip:port and starts marker and ML
+        streams. If no arguments for ip and port are given, then connects to
+        the default hardcoded address for a server on the cloud.
         """
         self.socket_client = SocketIO(ip, port)
         self.socket_client.connect()
 
+        # assumes EEG stream has already been started
+        for stream in ['marker', 'ml']:
+            self._start_stream(stream)
+
+        while len(self.streams['eeg'].data) == 0:
+            time.sleep(0.1)
+
+        self.time_diff = time.time() - self.streams['eeg'].data[-1][-1]
+
     def neurostack_disconnect(self):
-        """Disconnects from neurostack server"""
+        """Disconnects from neurostack server and stops marker and ML streams"""
+        for stream in ['marker', 'ml']:
+            self._stop_stream(stream)
+
         self.socket_client.disconnect()
 
     def send_predict_data(self, uuid, eeg_data):
@@ -209,25 +229,33 @@ class Muse(Device):
     #
 
     def connect(self, device_id=None):
-        """ Creates data streams if there are none and connects to them """
+        """
+        Creates data streams if there are none and connects to EEG stream
+        (since that is the one that is immediately needed for use)
+        """
         if self.streams.get('eeg') is None:
             self.streams['eeg'] = self._create_eeg_stream()
 
         if self.streams.get('marker') is None:
             self.streams['marker'] = self._create_marker_stream()
 
+        if self.streams.get('ml') is None:
+            data = {'event_time': 0.4,
+                    'train_epochs': 120}    # 120 for 2 min, 240 for 4 min
+            self.streams['ml'] = self._create_ml_stream(data)
+
         self.streams['eeg'].lsl_connect()
 
     def start(self):
-        """ Start streaming EEG data """
+        """Start streaming EEG data"""
         self.streams['eeg'].start()
 
     def stop(self):
-        """ Stop streaming EEG data """
+        """Stop streaming EEG data"""
         self.streams['eeg'].stop()
 
     def shutdown(self):
-        """ Disconnect EEG stream (and stop streaming data) """
+        """Disconnect EEG stream (and stop streaming data)"""
         self.streams['eeg'] = None
 
     def get_info(self):

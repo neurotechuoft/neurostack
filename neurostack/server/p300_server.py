@@ -40,7 +40,8 @@ def generate_uuid():
     """Generates a universally unique ID"""
     # Completely random UUID; use uuid1() for a UUID based on host MAC address
     # and current time
-    return uuid.uuid4()
+    return str(uuid.uuid4())
+    
 
 class P300Service:
     def __init__(self):
@@ -162,7 +163,7 @@ class P300Service:
         uuid = args.get(['uuid'])
         if uuid is None:
             uuid = generate_uuid()
-            
+
         data = args['data']
 
         # prepare data for prediction
