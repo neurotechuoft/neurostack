@@ -41,7 +41,7 @@ def generate_uuid():
     # Completely random UUID; use uuid1() for a UUID based on host MAC address
     # and current time
     return str(uuid.uuid4())
-    
+
 
 class P300Service:
     def __init__(self):
@@ -105,10 +105,7 @@ class P300Service:
 
         """
         # load arguments, generate UUID if none is provided
-        uuid = args.get(['uuid'])
-        if uuid is None:
-            uuid = generate_uuid()
-
+        uuid = args.get(['uuid'], generate_uuid())
         eeg_data = args['data']
         p300 = args['p300']
 
@@ -160,10 +157,7 @@ class P300Service:
                   }
         """
         # load arguments, generate UUID if none is provided
-        uuid = args.get(['uuid'])
-        if uuid is None:
-            uuid = generate_uuid()
-
+        uuid = args.get(['uuid'], generate_uuid())
         data = args['data']
 
         # prepare data for prediction
@@ -203,8 +197,9 @@ class P300Service:
         :returns: dummy prediction results, including a True or False for P300
                   and a confidence score
         """
+        uuid = args.get(['uuid'], generate_uuid())
         results = {
-            'uuid': args['uuid'],
+            'uuid': uuid,
             'p300': random.choice([True, False]),
             'score': random.random()
         }
@@ -223,8 +218,9 @@ class P300Service:
                      }
         :returns: dummy results of training
         """
+        uuid = args.get(['uuid'], generate_uuid())
         results = {
-            'uuid': args['uuid'],
+            'uuid': uuid,
             'acc': random.random()
         }
         return results

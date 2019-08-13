@@ -12,7 +12,8 @@ class Muse(Device):
         self.streams = {}
         self.pred_results = []
         self.train_results = []
-        self.time_diff = 0  # difference between unix and muse time
+        self.time_diff = 0      # difference between unix and muse time
+        self.train_mode = True  # True for training, False for prediction
 
     @staticmethod
     def available_devices():
@@ -141,6 +142,19 @@ class Muse(Device):
         self.socket_client.emit("train_classifier", data, self.on_train_results)
         self.socket_client.wait_for_callbacks(seconds=1)
 
+    def change_mode(self, train_mode=False):
+        """
+        self.train_mode=True for training mode
+        self.train_mode=False for prediction mode
+        """
+        if self.streams['ml'] is None:
+            raise Exception(f"ml stream does is not running")
+
+        curr_mode = self.streams['ml'].get_mode()
+        if curr_mode is not train_mode:
+            self.train_mode = train_mode
+            self.streams['ml'].set_mode(train_mode)
+
     async def train(self, sid, args):
         if not self.train_mode:
             self.change_mode(train_mode=True)
@@ -223,6 +237,37 @@ class Muse(Device):
         }
         self.socket_client.emit("train_classifier_test", args, self.print_results)
         self.socket_client.wait_for_callbacks(seconds=1)
+
+    async def start_event_loop(self):
+        """
+        Continuously pulls data from ml_stream and sends to server based on
+        whether we are training or predicting
+        """
+        if self.streams.get('ml') is None:
+            raise Exception(f"ml stream does not exist")
+
+        data = None
+        while data is None:
+            # send training jobs to server
+            if self.train_mode:
+                data = self.streams['ml'].get_training_data()
+                if data is not None:
+                    uuid = data['uuid']
+                    train_data = data['train_data']
+                    train_targets = data['train_targets']
+                    self.train(uuid, train_data, train_targets)
+                    return
+
+            # send prediction jobs to server
+            else:
+                data = self.streams['ml'].get_prediction_data()
+                if data is not None:
+                    uuid = data['uuid']
+                    eeg_data = data['eeg_data']
+                    self.predict(uuid, eeg_data)
+                    return
+
+            time.sleep(0.1)
 
     #
     # Public device metods
