@@ -2,8 +2,8 @@
 import threading
 import time
 import numpy as np
-from marker_stream import MarkerStream
-from eeg_stream import EEGStream
+from data_streams.marker_stream import MarkerStream
+from data_streams.eeg_stream import EEGStream
 
 import pickle
 
@@ -74,7 +74,7 @@ class MLStream(object):
 
                 print(f'Began analyzing data for epoch {epoch_id}...')
 
-                self.data_duration = num_events*self.event_time + self.analysis_time + self.extra_time
+                self.data_duration = num_events * self.event_time + self.analysis_time + self.extra_time
                 tmp = np.array(self.eeg_stream.data)
                 # get analysis_time seconds of data (in terms of the end_index) after the event
                 end_index = int((np.abs(tmp[:, -1] - timestamp)).argmin()

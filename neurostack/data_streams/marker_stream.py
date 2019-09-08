@@ -1,4 +1,4 @@
-import base_stream
+from data_streams.base_stream import BaseStream
 import pylsl
 import queue
 
@@ -15,7 +15,7 @@ def look_for_markers_stream():
     return marker_inlet
 
 
-class MarkerStream(base_stream.BaseStream):
+class MarkerStream(BaseStream):
     """Class for marker stream object, with same structure as MuseEEGStream.
     Receives markers over lsl and places them in a queue for analysis.
     """

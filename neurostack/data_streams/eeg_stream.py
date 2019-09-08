@@ -2,7 +2,7 @@
 Contains classes which update their EEG and marker/stimulus data in real time over lsl. Pre-processes data and makes it
 available for analysis.
 """
-from data_streams import BaseStream
+from data_streams.base_stream import BaseStream
 import numpy as np
 import pylsl
 from mne import create_info, Epochs, io
@@ -18,7 +18,7 @@ def look_for_eeg_stream():
     eeg_inlet = pylsl.StreamInlet(streams[0], max_chunklen=1)
 
     return eeg_inlet
-    
+
 
 def raw_filter(raw, low_f, high_f, picks):
     """Filters data with a bandpass 4th order butterworth filter.
@@ -79,6 +79,9 @@ def make_events(data, marker_stream, marker_end, trial_num, event_duration=0):
         markers: ndarray (n_events x 3); details the occurence index in main data, duration, and target.
         targets: list containing target values for training; i.e. 0 or 1.
     """
+    if len(data.shape) == 1:
+        np.expand_dims(data, axis=0)
+
     # Get the markers between two times.
     if data.shape[0] == 0:
         lower_time_limit = float(data[0, 0])
