@@ -8,8 +8,6 @@ import uuid
 # for testing
 import random
 
-# for database
-from sqlalchemy import create_engine, text
 import os
 import hashlib
 import binascii
@@ -69,7 +67,7 @@ class P300Service:
 
         return False
 
-    async def load_classifier(self, uuid):
+    def load_classifier(self, uuid):
         """
         Load classifier for client with given UUID into self.clf
 
@@ -77,7 +75,7 @@ class P300Service:
         :returns: True if classifier is successfully loaded, else False
         """
         try:
-            if self.clf[uuid] is None:
+            if self.clf.get(uuid) is None:
                 self.clf[uuid] = ml.load(f'clfs/{uuid}')
             return True
         except FileNotFoundError:
@@ -105,8 +103,8 @@ class P300Service:
 
         """
         # load arguments, generate UUID if none is provided
-        uuid = args.get(['uuid'], generate_uuid())
-        eeg_data = args['data']
+        uuid = args['uuid'] if args['uuid'] != 'None' else generate_uuid()
+        data = args['data']
         p300 = args['p300']
 
         # initialize if empty
@@ -115,6 +113,11 @@ class P300Service:
 
         self.inputs[uuid].append(np.array(data))
         self.targets[uuid].append(np.array(p300))
+
+        results = {
+            'uuid': uuid,
+            'acc': None
+        }
 
         if len(self.targets[uuid]) % 10 == 0 and len(self.targets[uuid]) >= 30:
             X = np.array(self.inputs[uuid])
@@ -131,13 +134,9 @@ class P300Service:
 
             save_classifier(uuid)
 
-            results = {
-                'uuid': args['uuid'],
-                'acc': acc
-            }
-            return results
+            results['acc'] = acc
 
-        return None
+        return results
 
     async def retrieve_prediction_results(self, sid, args):
         """
@@ -157,7 +156,7 @@ class P300Service:
                   }
         """
         # load arguments, generate UUID if none is provided
-        uuid = args.get(['uuid'], generate_uuid())
+        uuid = args['uuid'] if args['uuid'] != 'None' else generate_uuid()
         data = args['data']
 
         # prepare data for prediction
@@ -165,10 +164,10 @@ class P300Service:
         data = np.expand_dims(data, axis=0)
 
         # load classifier if not already loaded
-        if load_classifier(uuid)
+        if self.load_classifier(uuid):
             p300 = self.clf[uuid].predict(data)[0]
         else:
-            raise Exception('Cannot load classifier and make prediction')
+            return 'Cannot load classifier and make prediction'
 
         # currently we do not have a confidence method
         score = 1
@@ -230,7 +229,6 @@ class P300Service:
         # train classifier and predict
         self.sio.on("retrieve_prediction_results", self.retrieve_prediction_results)
         self.sio.on("train_classifier", self.train_classifier)
-        self.sio.on("load_classifier", self.load_classifier)
 
         # for testing
         self.sio.on("retrieve_prediction_results_test", self.retrieve_prediction_results_test)
