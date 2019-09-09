@@ -89,3 +89,6 @@ class MarkerStream(BaseStream):
                                    'timestamp': timestamp,
                                    'marker_end': marker_end})
                 print(f"Analysis queue updated with epoch: {epoch_id}")
+
+                # reset after pushing analysis 
+                self.event_count_dict[epoch_id] = 0

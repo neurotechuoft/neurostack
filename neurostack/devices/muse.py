@@ -7,6 +7,7 @@ from socketIO_client import SocketIO
 
 import json
 import pylsl
+import random
 import socketio
 import time
 import warnings
@@ -225,7 +226,7 @@ class Muse(Device):
             str(timestamp),
             str(p300),      # target
             str(1),         # 1 event total
-            str(uuid)       # take uuid for epoch id
+            str(uuid)       # epoch ID
         ]
         self.marker_outlet.push_sample(package)
         await self.start_event_loop()
@@ -249,7 +250,7 @@ class Muse(Device):
             str(timestamp),
             str(0),         # target
             str(1),         # 1 event total
-            str(uuid)       # take uuid for epoch id
+            str(uuid)       # epoch ID
         ]
         self.marker_outlet.push_sample(package)
         await self.start_event_loop()
