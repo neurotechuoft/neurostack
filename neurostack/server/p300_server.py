@@ -51,7 +51,7 @@ class P300Service:
         self.inputs = {}    # training data with UUID as key
         self.targets = {}
 
-    async def save_classifier(self, uuid):
+    def save_classifier(self, uuid):
         """
         Load classifier for client with given UUID into self.clf
 
@@ -119,7 +119,7 @@ class P300Service:
             'acc': None
         }
 
-        if len(self.targets[uuid]) % 10 == 0 and len(self.targets[uuid]) >= 30:
+        if len(self.targets[uuid]) % 10 == 0 and len(self.targets[uuid]) >= 10:
             X = np.array(self.inputs[uuid])
             y = np.array(self.targets[uuid])
 
@@ -132,7 +132,7 @@ class P300Service:
             self.clf[uuid] = ml.ml_classifier(X_train, y_train, classifier=None, pipeline='vect_lr')
             acc = self.clf[uuid].score(X_test, y_test)
 
-            save_classifier(uuid)
+            self.save_classifier(uuid)
 
             results['acc'] = acc
 
