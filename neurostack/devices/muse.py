@@ -4,6 +4,7 @@ from data_streams.ml_stream import MLStream
 from devices import Device
 from sanic import Sanic
 from socketIO_client import SocketIO
+from utils import generate_uuid
 
 import json
 import pylsl
@@ -210,6 +211,8 @@ class Muse(Device):
         self.sio.on("train", self.train_handler)
         self.sio.on("predict", self.predict_handler)
 
+        self.sio.on("generate_uuid", self.generate_uuid_handler)
+
     async def train_handler(self, sid, args):
         """Handler for passing training data to Neurostack"""
         if not self.train_mode:
@@ -258,6 +261,10 @@ class Muse(Device):
         while len(self.pred_results) == 0:
             time.sleep(.1)
         return self.pred_results.pop(0)
+
+    async def generate_uuid_handler(self, sid, args):
+        """Handler for sending a request to the server to generate a UUID"""
+        return generate_uuid()
 
     async def start_event_loop(self):
         """

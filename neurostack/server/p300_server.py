@@ -1,9 +1,9 @@
 from sanic import Sanic
 import socketio
-import ml
+from server import ml
 import numpy as np
 from sklearn.model_selection import train_test_split
-import uuid
+from utils import generate_uuid
 
 # for testing
 import random
@@ -32,13 +32,6 @@ def verify_password(stored_password, provided_password):
                                   100000)
     pwdhash = binascii.hexlify(pwdhash).decode('ascii')
     return pwdhash == stored_password
-
-
-def generate_uuid():
-    """Generates a universally unique ID"""
-    # Completely random UUID; use uuid1() for a UUID based on host MAC address
-    # and current time
-    return str(uuid.uuid4())
 
 
 class P300Service:
@@ -233,10 +226,3 @@ class P300Service:
         # for testing
         self.sio.on("retrieve_prediction_results_test", self.retrieve_prediction_results_test)
         self.sio.on("train_classifier_test", self.train_classifier_test)
-
-
-if __name__ == '__main__':
-    service = P300Service()
-    service.initialize_handlers()
-
-    service.app.run(host='localhost', port=8001)
