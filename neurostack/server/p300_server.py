@@ -8,6 +8,7 @@ from utils import generate_uuid
 # for testing
 import random
 
+import json
 import os
 import hashlib
 import binascii
@@ -189,7 +190,8 @@ class P300Service:
         :returns: dummy prediction results, including a True or False for P300
                   and a confidence score
         """
-        uuid = args.get(['uuid'], generate_uuid())
+        args = json.loads(args)
+        uuid = args.get('uuid', generate_uuid())
         results = {
             'uuid': uuid,
             'p300': random.choice([True, False]),
@@ -210,7 +212,8 @@ class P300Service:
                      }
         :returns: dummy results of training
         """
-        uuid = args.get(['uuid'], generate_uuid())
+        args = json.loads(args)
+        uuid = args.get('uuid', generate_uuid())
         results = {
             'uuid': uuid,
             'acc': random.random()
@@ -224,5 +227,5 @@ class P300Service:
         self.sio.on("train_classifier", self.train_classifier)
 
         # for testing
-        self.sio.on("retrieve_prediction_results_test", self.retrieve_prediction_results_test)
-        self.sio.on("train_classifier_test", self.train_classifier_test)
+        self.sio.on("predict_test", self.retrieve_prediction_results_test)
+        self.sio.on("train_test", self.train_classifier_test)
