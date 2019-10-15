@@ -68,53 +68,40 @@ socket_client.emit("train", args, callback_function)
 socket_client.wait_for_callbacks(seconds=2)
 ```
 
+### WebSocket API
 
+Below we have each of the callable handles, as well as their required parameters and returned values:
 
+#### generate_uuid
+Generate a universally unique identifier.
 
-<!-- **(In development)**
+Parameters:
+> None
 
-```python
-from neurostack import Neurostack
-import neurostack.devices as devices
+Returns:
+> generated UUID
 
-if __name__ == "main":
+#### predict
+Make a prediction the data at a timestamp.
 
-    neurostack = Neurostack(
-        device = devices.OpenBCI(),
-        tags = [
-            ui_tag,
-        ],
-        subscribers = [
-            mmc_socket_connection,
-            p300_socket_connection,
-        ]
-    )
+Parameters:
+> `uuid`: UUID of whoever is making a prediction. This will determine which classifier we will load up and use.  
+`timestamp`: timestamp of chunk of data
 
-    neurostack.start()
-```
+Returns:
+> `uuid`: UUID of caller  
+`p300`: either True or False, predicting whether there is a P300 ERP  
+`score`: a value from 0 to 1 denoting the confidence in the prediction
 
-## Documentation
+#### train
+Give a training example to the classifier.
 
-### class **Neurostack** (*device*=devices.OpenBCI, *subscribers* = [], *tags* = [])
+Parameters:
+Parameters:
+> `uuid`: UUID of whoever is making a prediction. This will determine which classifier we will load up and use.  
+`timestamp`: timestamp of chunk of data  
+`p300`: either True or False, depending on whether there should be a P300 ERP
 
-### *Parameters*:
-
-***device***: EEG device type to stream from
-
-***subscribers***: WebSockets of subscribers where EEG data will stream to
-
-***tags***: Sources of tags to append to EEG data
-
-### *Functions*
-
-***start()***
-
-Start streaming EEG from device, and publish data to subscribers.
-
-***stop()***
-
-Stop streaming EEG data from device, and stop publishing data to subscribers. Connection to device remains intact, and device is not turned off.
-
-***shutdown()***
-
-Close connection to device, WebSocket connections to publishers, and tag sources. -->
+Returns:
+> `uuid`: UUID of caller  
+`acc`: accuracy of current classifier. This is either None/null (not enough training samples for training), or a number between 0 and 1.
