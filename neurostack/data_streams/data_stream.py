@@ -166,8 +166,11 @@ class DataStream:
 
         for channel in channels:
             if self.channels.get(channel) is not None:
-
-                return_data[channel] = copy.deepcopy(self.channels[channel][-1])
+                # If the channel has no data (is empty)
+                if not self.channels[channel]:
+                    return_data[channel] = []
+                else:
+                    return_data[channel] = copy.deepcopy(self.channels[channel][-1])
 
             else:
                 print(f"A channel with name {channel} does not exist")
