@@ -144,7 +144,7 @@ class DataStream:
         :param data:
         :return:
         """
-        pass
+        self.channels[channel].append(data)
 
     def remove_data(self, channel, data):
         """
@@ -155,7 +155,10 @@ class DataStream:
         :param data:
         :return:
         """
-        pass
+        try:
+            self.channels[channel].remove(data)
+        except ValueError:
+            raise (ValueError, "data does not exist in channel")
 
     #
     # Stream information
