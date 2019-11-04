@@ -23,8 +23,10 @@ class DataStream:
     def __init__(self):
         """Initializes data stream"""
         self.channels = {}
-        self.thread = None
-        self.eeg_channel_names = None
+
+        self._eeg_thread = None
+        self._eeg_inlet = None
+        self._eeg_channel_names = None
 
     #
     # Connection methods
@@ -33,8 +35,8 @@ class DataStream:
     def lsl_connect(self):
         """Connects to LSL stream"""
         # get stream
-        eeg_stream = look_for_eeg_stream()
-        info = eeg_stream.info()
+        self._eeg_inlet = look_for_eeg_stream()
+        info = self._eeg_inlet.info()
 
         # get channel names
         ch_names = []
@@ -42,13 +44,13 @@ class DataStream:
         for _ in range(info.channel_count()):
             ch_names.append(this_child.child_value('label'))
             this_child = this_child.next_sibling('channel')
-        self.eeg_channel_names = ch_names
+        self._eeg_channel_names = ch_names
 
         # record data to channels
-        self._thread = threading.Thread(target=self._record_lsl_data_indefinitely,
-                                        name='lsl')
-        self._thread.daemon = True
-        self._thread.start()
+        self._eeg_thread = threading.Thread(target=self._record_lsl_data_indefinitely,
+                                            name='lsl')
+        self._eeg_thread.daemon = True
+        self._eeg_thread.start()
 
     def _record_lsl_data_indefinitely(self):
         """
@@ -58,17 +60,17 @@ class DataStream:
         :return: does not return
         """
         # create channels
-        for channel_name in self.eeg_channel_names:
+        for channel_name in self._eeg_channel_names:
             self.add_channel(channel_name)
 
         # continuously pull data
         while True:
-            samples, timestamp = inlet.pull_sample()
-            time_correction = inlet.time_correction()
+            samples, timestamp = self._eeg_inlet.pull_sample()
+            time_correction = self._eeg_inlet.time_correction()
 
             # add pulled samples to channels
             for i in range(len(samples)):
-                self.add_data(self.eeg_channel_names[i],
+                self.add_data(self._eeg_channel_names[i],
                               [timestamp + time_correction] + samples[i])
 
     def add_channel(self, name):
@@ -76,8 +78,6 @@ class DataStream:
         Adds a channel to the data stream
 
         :param name: name of channel to add
-        :param inlet: data inlet for the channel. If none is specified, then
-                      data in the channel will have to be added with add_data.
         :return: None
         """
         if self.channels.get(name) is not None:
