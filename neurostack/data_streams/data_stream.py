@@ -4,6 +4,7 @@ methods taken from https://github.com/kaczmarj/rteeg
 """
 import numpy as np
 import pylsl
+import copy
 
 
 def look_for_eeg_stream():
@@ -115,7 +116,25 @@ class DataStream:
         :param duration:
         :return:
         """
-        pass
+        return_data = {}
+
+        for channel in channels:
+            if self.channels.get(channel) is not None:
+
+                data_slice = []
+
+                stop_time = start_time + duration
+
+                for data in self.channels[channel]:
+                    if start_time <= data[0] <= stop_time:
+                        data_slice.append(copy.deepcopy(data))
+
+                return_data[channel] = data_slice
+
+            else:
+                print(f"A channel with name {channel} does not exist")
+
+        return return_data
 
     def get_all_data(self, channels):
         """
@@ -124,7 +143,17 @@ class DataStream:
         :param channels:
         :return
         """
-        pass
+        return_data = {}
+
+        for channel in channels:
+            if self.channels.get(channel) is not None:
+
+                return_data[channel] = copy.deepcopy(self.channels[channel])
+
+            else:
+                print(f"A channel with name {channel} does not exist")
+
+        return return_data
 
     def get_latest_data(self, channels):
         """
@@ -133,7 +162,20 @@ class DataStream:
         :param channels:
         :return:
         """
-        pass
+        return_data = {}
+
+        for channel in channels:
+            if self.channels.get(channel) is not None:
+                # If the channel has no data (is empty)
+                if not self.channels[channel]:
+                    return_data[channel] = []
+                else:
+                    return_data[channel] = copy.deepcopy(self.channels[channel][-1])
+
+            else:
+                print(f"A channel with name {channel} does not exist")
+
+        return return_data
 
     def add_data(self, channel, data):
         """
@@ -144,7 +186,10 @@ class DataStream:
         :param data:
         :return:
         """
-        pass
+        if self.channels.get(channel) is not None:
+            self.channels[channel].append(data)
+        else:
+            print(f"A channel with name {channel} does not exist")
 
     def remove_data(self, channel, data):
         """
@@ -155,7 +200,13 @@ class DataStream:
         :param data:
         :return:
         """
-        pass
+        if self.channels.get(channel) is not None:
+            try:
+                self.channels[channel].remove(data)
+            except ValueError:
+                raise (ValueError, f"{data} data does not exist in the channel named {channel}")
+        else:
+            print(f"A channel with name {channel} does not exist")
 
     #
     # Stream information
