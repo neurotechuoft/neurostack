@@ -10,6 +10,7 @@ import json
 import pylsl
 import random
 import socketio
+import threading
 import time
 import warnings
 
@@ -112,13 +113,26 @@ class Muse(Device):
             and TP10 on the muse headset"""
             return [random.random() for _ in range(4)]
 
-        info = pylsl.StreamInfo(name='Fake Muse', type='EEG', channel_count=4)
+        # create fake muse
+        info = pylsl.StreamInfo(name='Muse', type='EEG', channel_count=4,
+                                nominal_srate=256, channel_format='float32', source_id='fake muse')
+        info.desc().append_child_value('manufacturer', 'Muse')
+        channels = info.desc().append_child('channels')
+
+        # set channel names and units
+        for c in ['TP9-l_ear', 'FP1-l_forehead', 'FP2-r_forehead',
+                  'TP10-r_ear']:
+            channels.append_child("channel") \
+                .append_child_value("label", c) \
+                .append_child_value("unit", "microvolts") \
+                .append_child_value("type", "EEG")
+
         outlet = pylsl.StreamOutlet(info)
 
         # continuously push data to outlet when active
         while self._fake_muse_active:
             outlet.push_sample(generate_muse_data())
-            time.sleep(0.01)
+            time.sleep(0.00390625)  # 256Hz
 
     #
     # Methods for handling server communication
