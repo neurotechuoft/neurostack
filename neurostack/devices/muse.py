@@ -10,6 +10,7 @@ import json
 import pylsl
 import random
 import socketio
+import threading
 import time
 import warnings
 
@@ -29,6 +30,10 @@ class Muse(Device):
         self.sio = socketio.AsyncServer(async_mode='sanic')
         self.app = Sanic()
         self.sio.attach(self.app)
+
+        # for generating fake data
+        self._fake_muse = None
+        self._fake_muse_active = False
 
     @staticmethod
     def available_devices():
@@ -95,6 +100,39 @@ class Muse(Device):
             raise RuntimeError("Cannot stop {0} stream, stream does not exist".format(stream))
         else:
             self.streams[stream].stop()
+
+    def _create_fake_eeg_stream(self):
+        """
+        Method for generating dummy EEG data for the muse. Sends randomly-
+        generated data through an LSL outlet.
+
+        :return: None
+        """
+        def generate_muse_data():
+            """Generate 4 random floats, representing channels AF7, AF8, TP9,
+            and TP10 on the muse headset"""
+            return [random.random() for _ in range(4)]
+
+        # create fake muse
+        info = pylsl.StreamInfo(name='Muse', type='EEG', channel_count=4,
+                                nominal_srate=256, channel_format='float32', source_id='fake muse')
+        info.desc().append_child_value('manufacturer', 'Muse')
+        channels = info.desc().append_child('channels')
+
+        # set channel names and units
+        for c in ['TP9-l_ear', 'FP1-l_forehead', 'FP2-r_forehead',
+                  'TP10-r_ear']:
+            channels.append_child("channel") \
+                .append_child_value("label", c) \
+                .append_child_value("unit", "microvolts") \
+                .append_child_value("type", "EEG")
+
+        outlet = pylsl.StreamOutlet(info)
+
+        # continuously push data to outlet when active
+        while self._fake_muse_active:
+            outlet.push_sample(generate_muse_data())
+            time.sleep(0.00390625)  # 256Hz
 
     #
     # Methods for handling server communication
@@ -298,13 +336,15 @@ class Muse(Device):
             time.sleep(0.1)
 
     #
-    # Public device metods
+    # Public device methods
     #
 
-    def connect(self, device_id=None):
+    def connect(self, device_id=None, fake_data=False):
         """
         Creates data streams if there are none and connects to EEG stream
-        (since that is the one that is immediately needed for use)
+        (since that is the one that is immediately needed for use). If fake_data
+        is True, then start a separate thread that generates fake data instead
+        of connecting to a muse.
         """
         if self.streams.get('eeg') is None:
             self.streams['eeg'] = self._create_eeg_stream()
@@ -316,6 +356,16 @@ class Muse(Device):
             data = {'event_time': 0.4,
                     'train_epochs': 120}    # 120 for 2 min, 240 for 4 min
             self.streams['ml'] = self._create_ml_stream(data)
+
+        # create thread that runs something which continuously streams data
+        if fake_data:
+            eeg_data_thread = threading.Thread(target=self._create_fake_eeg_stream,
+                                               name='fake muse')
+            eeg_data_thread.daemon = True
+            eeg_data_thread.start()
+
+            self._fake_muse_active = True
+            self._fake_muse = eeg_data_thread
 
         self.streams['eeg'].lsl_connect()
 
