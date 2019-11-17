@@ -6,16 +6,6 @@ class Device(ABC):
     def __init__(self, device_id=None):
         self.device_id = device_id
 
-    @staticmethod
-    @abstractmethod
-    def available_devices() -> []:
-        """
-        Return a list of devices available to connect to on particular computer.
-
-        :return:
-        """
-        pass
-
     @abstractmethod
     def connect(self, device_id=None) -> None:
         """
