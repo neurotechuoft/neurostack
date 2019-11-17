@@ -27,7 +27,7 @@ class Muse(Device):
 
         # socket for communicating with whatever wants to pull prediction
         # results from Muse
-        self.sio = socketio.AsyncServer(async_mode='sanic')
+        self.sio = socketio.AsyncServer(async_mode='sanic', cors_allowed_origins='*', engineio_logger=True)
         self.app = Sanic()
         self.sio.attach(self.app)
 
@@ -274,7 +274,9 @@ class Muse(Device):
 
         while len(self.train_results) == 0:
             time.sleep(.1)
-        return self.train_results.pop(0)
+        result = self.train_results.pop(0)
+        await self.sio.emit("train", result)
+        return result
 
     async def predict_handler(self, sid, args):
         """Handler for passing prediction data to Neurostack"""

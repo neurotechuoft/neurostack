@@ -39,16 +39,16 @@ for i in range(40):
     timestamp = time.time()
     p300 = random.choice([0, 1])
 
-    args = json.dumps({'uuid': uuid, 'timestamp': timestamp})
-    socket_client.emit("predict", args, print_results)
-    socket_client.wait_for_callbacks(seconds=2)
-
-    time.sleep(1)
-
-    # args = json.dumps({'uuid': uuid, 'timestamp': timestamp, 'p300': p300})
-    # socket_client.emit("train", args, print_results)
+    # args = json.dumps({'uuid': uuid, 'timestamp': timestamp})
+    # socket_client.emit("predict", args, print_results)
     # socket_client.wait_for_callbacks(seconds=2)
-    #
+
     # time.sleep(1)
+
+    args = json.dumps({'uuid': uuid, 'timestamp': timestamp, 'p300': p300})
+    socket_client.emit("train", args, print_results)
+    socket_client.wait_for_callbacks(seconds=2)
+    
+    time.sleep(1)
 
 socket_client.disconnect()
