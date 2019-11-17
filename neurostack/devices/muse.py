@@ -1,6 +1,5 @@
 from streams.data_stream import DataStream
 from devices import Device
-from sanic import Sanic
 
 import pylsl
 import random
@@ -80,7 +79,8 @@ class Muse(Device):
             self._fake_muse_active = True
             self._fake_muse = eeg_data_thread
 
-        # TODO: connect with data stream
+        else:
+            self.data_stream.lsl_connect()
 
     def start(self):
         """Start streaming EEG data"""

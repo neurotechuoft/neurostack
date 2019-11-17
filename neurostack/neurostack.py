@@ -1,12 +1,13 @@
 from socketIO_client import SocketIO
 from utils import generate_uuid
+from sanic import Sanic
 
 import json
 import socketio
 import time
 
 
-class Neurostack():
+class Neurostack:
 
     def __init__(self, devices=None):
         """
@@ -17,10 +18,12 @@ class Neurostack():
         """
         self.devices = devices
 
-        # sanic server
-        self.sio = socketio.AsyncServer(async_mode='sanic')
-        self.app = Sanic()
-        self.sio.attach(self.app)
+        # sanic server connects to app
+        self.sio_app = socketio.AsyncServer(async_mode='sanic')
+        self.sio_app.attach(Sanic())
+
+        # socketIO client connects to neurostack server
+        self.sio_neurostack = None
 
     #
     # Methods for handling devices
@@ -82,12 +85,12 @@ class Neurostack():
         port are given, then connects to the default hardcoded address for a
         server on the cloud.
         """
-        self.sio = SocketIO(ip, port)
-        self.sio.connect()
+        self.sio_neurostack = SocketIO(ip, port)
+        self.sio_neurostack.connect()
 
     def neurostack_disconnect(self):
         """Disconnects from neurostack server"""
-        self.sio.disconnect()
+        self.sio_neurostack.disconnect()
 
     def send_train_data(self, uuid, eeg_data, p300):
         """
@@ -103,8 +106,8 @@ class Neurostack():
             'data': eeg_data,
             'p300': p300
         }
-        self.socket_client.emit("train_classifier", args, self.on_train_results)
-        self.socket_client.wait_for_callbacks(seconds=1)
+        self.sio_neurostack.emit("train_classifier", args, self.on_train_results)
+        self.sio_neurostack.wait_for_callbacks(seconds=1)
 
     def send_predict_data(self, uuid, eeg_data):
         """
@@ -118,8 +121,8 @@ class Neurostack():
             'uuid': uuid,
             'data': eeg_data
         }
-        self.socket_client.emit("retrieve_prediction_results", args, self.on_retrieve_prediction_results)
-        self.socket_client.wait_for_callbacks(seconds=1)
+        self.sio_neurostack.emit("retrieve_prediction_results", args, self.on_retrieve_prediction_results)
+        self.sio_neurostack.wait_for_callbacks(seconds=1)
 
     def change_mode(self, train_mode=False):
         """
@@ -146,8 +149,8 @@ class Neurostack():
             'uuid': uuid,
             'data': eeg_data
         }
-        self.socket_client.emit("retrieve_prediction_results_test", args, self.print_results)
-        self.socket_client.wait_for_callbacks(seconds=1)
+        self.sio_neurostack.emit("retrieve_prediction_results_test", args, self.print_results)
+        self.sio_neurostack.wait_for_callbacks(seconds=1)
 
     def send_train_data_test(self, uuid, eeg_data, p300):
         """
@@ -163,8 +166,8 @@ class Neurostack():
             'data': eeg_data,
             'p300': p300
         }
-        self.socket_client.emit("train_classifier_test", args, self.print_results)
-        self.socket_client.wait_for_callbacks(seconds=1)
+        self.sio_neurostack.emit("train_classifier_test", args, self.print_results)
+        self.sio_neurostack.wait_for_callbacks(seconds=1)
 
     #
     # Methods for handling client-side communication
@@ -172,10 +175,9 @@ class Neurostack():
 
     def initialize_handlers(self):
         """Initialize handlers for client-side communication"""
-        self.sio.on("train", self.train_handler)
-        self.sio.on("predict", self.predict_handler)
-
-        self.sio.on("generate_uuid", self.generate_uuid_handler)
+        self.sio_app.on("train", self.train_handler)
+        self.sio_app.on("predict", self.predict_handler)
+        self.sio_app.on("generate_uuid", self.generate_uuid_handler)
 
     async def train_handler(self, sid, args):
         """Handler for passing training data to Neurostack"""
