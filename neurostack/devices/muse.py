@@ -1,4 +1,4 @@
-from streams.data_stream import DataStream
+from data_streams.data_stream import DataStream
 from devices import Device
 
 import pylsl
@@ -79,20 +79,25 @@ class Muse(Device):
             self._fake_muse_active = True
             self._fake_muse = eeg_data_thread
 
-        else:
-            self.data_stream.lsl_connect()
+        self.data_stream.lsl_connect()
 
     def start(self):
         """Start streaming EEG data"""
-        # TODO: start data stream (ie. connect to lsl)
-        # TODO: wait until there is EEG data in the stream
-        # TODO: get time difference
-        pass
+        self.data_stream.lsl_start()
+        while len(self.data_stream.list_channels()) == 0:
+            time.sleep(0.01)
+        channel_name = [self.data_stream.list_channels()[0]]
+        while
+        self.time_diff = self.data_stream.get_latest_data(channel_name)
+
+        time.sleep(2)
+        print(self.data_stream.get_all_data(channel_name))
+
 
     def stop(self):
         """Stop streaming EEG data"""
         # TODO: stop streaming EEG data in data stream
-        pass
+        self.data_stream.lsl_stop()
 
     def shutdown(self):
         """Disconnect EEG stream (and stop streaming data)"""

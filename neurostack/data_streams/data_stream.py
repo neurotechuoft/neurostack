@@ -4,6 +4,7 @@ methods taken from https://github.com/kaczmarj/rteeg
 """
 import numpy as np
 import pylsl
+import threading
 import copy
 
 
@@ -47,11 +48,18 @@ class DataStream:
             this_child = this_child.next_sibling('channel')
         self._eeg_channel_names = ch_names
 
+    def lsl_start(self):
+        """Start recording data from LSL stream"""
         # record data to channels
         self._eeg_thread = threading.Thread(target=self._record_lsl_data_indefinitely,
                                             name='lsl')
         self._eeg_thread.daemon = True
         self._eeg_thread.start()
+
+    def lsl_stop(self):
+        """
+        """
+        # TODO: stop LSL stream
 
     def _record_lsl_data_indefinitely(self):
         """
