@@ -80,7 +80,7 @@ class DataStream:
             # add pulled samples to channels
             for i in range(len(samples)):
                 self.add_data(self._eeg_channel_names[i],
-                              [timestamp + time_correction] + samples[i])
+                              [timestamp + time_correction] + [samples[i]])
 
     def add_channel(self, name):
         """
@@ -151,6 +151,9 @@ class DataStream:
         :param channels:
         :return
         """
+        if not isinstance(channels, list):
+            return copy.deepcopy(self.channels[channels])
+
         return_data = {}
 
         for channel in channels:
@@ -168,8 +171,12 @@ class DataStream:
         Gets (a copy of the) latest data entry from channels
 
         :param channels:
-        :return:
+        :return: a list of data if there is only 1 channel given, else a dict
+        with channel names as keys and data as values.
         """
+        if not isinstance(channels, list):
+            return copy.deepcopy(self.channels[channels][-1])
+
         return_data = {}
 
         for channel in channels:
@@ -215,6 +222,15 @@ class DataStream:
                 raise (ValueError, f"{data} data does not exist in the channel named {channel}")
         else:
             print(f"A channel with name {channel} does not exist")
+
+    def has_data(self, channel):
+        """
+        Checks if a specific channel has any data.
+
+        :param channel: channel
+        :return: True if the channel has data, False otherwise
+        """
+        return not len(self.channels.get(channel, [])) == 0
 
     #
     # Stream information

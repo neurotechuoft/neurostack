@@ -84,15 +84,16 @@ class Muse(Device):
     def start(self):
         """Start streaming EEG data"""
         self.data_stream.lsl_start()
+
+        # wait until the channels are set up
         while len(self.data_stream.list_channels()) == 0:
             time.sleep(0.01)
-        channel_name = [self.data_stream.list_channels()[0]]
-        while
+        channel_name = self.data_stream.list_channels()[0]
+
+        # wait until there is data in the channels
+        while not self.data_stream.has_data(channel_name):
+            time.sleep(0.01)
         self.time_diff = self.data_stream.get_latest_data(channel_name)
-
-        time.sleep(2)
-        print(self.data_stream.get_all_data(channel_name))
-
 
     def stop(self):
         """Stop streaming EEG data"""
