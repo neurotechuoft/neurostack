@@ -27,6 +27,7 @@ class DataStream:
         self.channels = {}
 
         self._eeg_thread = None
+        self._eeg_thread_active = False
         self._eeg_inlet = None
         self._eeg_channel_names = None
 
@@ -50,6 +51,8 @@ class DataStream:
 
     def lsl_start(self):
         """Start recording data from LSL stream"""
+        self._eeg_thread_active = True
+
         # record data to channels
         self._eeg_thread = threading.Thread(target=self._record_lsl_data_indefinitely,
                                             name='lsl')
@@ -57,9 +60,9 @@ class DataStream:
         self._eeg_thread.start()
 
     def lsl_stop(self):
-        """
-        """
-        # TODO: stop LSL stream
+        """Stop recording data from LSL stream"""
+        self._eeg_thread_active = False
+        self._eeg_thread = None
 
     def _record_lsl_data_indefinitely(self):
         """
@@ -70,10 +73,11 @@ class DataStream:
         """
         # create channels
         for channel_name in self._eeg_channel_names:
-            self.add_channel(channel_name)
+            if channel_name not in self.list_channels():
+                self.add_channel(channel_name)
 
         # continuously pull data
-        while True:
+        while self._eeg_thread_active:
             samples, timestamp = self._eeg_inlet.pull_sample()
             time_correction = self._eeg_inlet.time_correction()
 

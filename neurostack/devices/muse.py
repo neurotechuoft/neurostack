@@ -102,7 +102,9 @@ class Muse(Device):
 
     def shutdown(self):
         """Disconnect EEG stream (and stop streaming data)"""
-        pass
+        self.data_stream.lsl_Stop()
+        self.data_stream = DataStream()
 
     def get_info(self):
-        pass
+        """Print info about device"""
+        print("Device ID: " + str(self.device_id))
