@@ -1,3 +1,4 @@
+from devices.muse import Muse
 from socketIO_client import SocketIO
 from utils import generate_uuid
 from sanic import Sanic
@@ -39,7 +40,6 @@ class Neurostack:
 
         :return: None
         """
-
         if list_of_devices is None:
             devices_to_start = self.devices
         else:
@@ -308,8 +308,14 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # TODO: add something to specify which devices get passed in
+    muse = Muse()
+    muse.connect(fake_data=True)
+    muse.start()
+
     # create and run neurostack!
-    neurostack = Neurostack()
+    devices = [muse]
+    neurostack = Neurostack(devices=devices)
 
     # connect to neurostack server
     if args.server_address is not None:

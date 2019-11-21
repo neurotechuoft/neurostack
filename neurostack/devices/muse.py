@@ -62,7 +62,7 @@ class Muse(Device):
     # Public device methods
     #
 
-    def connect(self, device_id=None, fake_data=False):
+    def connect(self, fake_data=False):
         """
         Creates data streams if there are none and connects to EEG stream
         (since that is the one that is immediately needed for use). If fake_data
@@ -97,7 +97,6 @@ class Muse(Device):
 
     def stop(self):
         """Stop streaming EEG data"""
-        # TODO: stop streaming EEG data in data stream
         self.data_stream.lsl_stop()
 
     def shutdown(self):
