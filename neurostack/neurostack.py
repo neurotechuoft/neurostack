@@ -123,21 +123,8 @@ class Neurostack:
             'uuid': uuid,
             'data': eeg_data
         }
-        self.sio_neurostack.emit("retrieve_prediction_results", args, self.on_retrieve_prediction_results)
+        self.sio_neurostack.emit("retrieve_prediction_results", args, self.on_predict_results)
         self.sio_neurostack.wait_for_callbacks(seconds=1)
-
-    def change_mode(self, train_mode=False):
-        """
-        self.train_mode=True for training mode
-        self.train_mode=False for prediction mode
-        """
-        if self.streams['ml'] is None:
-            raise Exception(f"ml stream does is not running")
-
-        curr_mode = self.streams['ml'].get_mode()
-        if curr_mode is not train_mode:
-            self.train_mode = train_mode
-            self.streams['ml'].set_mode(train_mode)
 
     def send_predict_data_test(self, uuid, eeg_data):
         """
@@ -194,23 +181,23 @@ class Neurostack:
 
     async def train_handler(self, sid, args):
         """Handler for passing training data to Neurostack"""
-        if not self.train_mode:
-            self.change_mode(train_mode=True)
-            time.sleep(.2)
-
         args = json.loads(args)
         uuid = args['uuid']
         timestamp = args['timestamp']
         p300 = args['p300']
 
-        timestamp -= self.time_diff
+        # TODO: subtract time difference
+        # timestamp -= self.time_diff
         package = [
             str(timestamp),
             str(p300),      # target
             str(1),         # 1 event total
             str(uuid)       # epoch ID
         ]
-        self.marker_outlet.push_sample(package)
+        # TODO: wait until the device has enough data (ie. until the time slice
+        #       is complete), take the relevant data, and send it to
+        #       the neurostack server for processing
+        # self.marker_outlet.push_sample(package)
         await self.start_event_loop()
 
         while len(self.train_results) == 0:
@@ -219,22 +206,22 @@ class Neurostack:
 
     async def predict_handler(self, sid, args):
         """Handler for passing prediction data to Neurostack"""
-        if self.train_mode:
-            self.change_mode(train_mode=False)
-            time.sleep(.2)
-
         args = json.loads(args)
         uuid = args['uuid']
         timestamp = args['timestamp']
 
-        timestamp -= self.time_diff
+        # TODO: subtract time difference
+        # timestamp -= self.time_diff
         package = [
             str(timestamp),
             str(0),         # target
             str(1),         # 1 event total
             str(uuid)       # epoch ID
         ]
-        self.marker_outlet.push_sample(package)
+        # TODO: wait until the device has enough data (ie. until the time slice
+        #       is complete), take the relevant data, and send it to
+        #       the neurostack server for processing
+        # self.marker_outlet.push_sample(package)
         await self.start_event_loop()
 
         while len(self.pred_results) == 0:
@@ -247,17 +234,14 @@ class Neurostack:
 
     async def start_event_loop(self):
         """
-        Continuously pulls data from ml_stream and sends to server based on
-        whether we are training or predicting
+        Continuously pulls data and sends to server based on whether we are
+        training or predicting
         """
-        if self.streams.get('ml') is None:
-            raise Exception(f"ml stream does not exist")
-
         data = None
         while data is None:
             # send training jobs to server
             if self.train_mode:
-                data = self.streams['ml'].get_training_data()
+                # TODO: get relevant data from device's data stream
                 if data is not None:
                     uuid = data['uuid']
                     train_data = data['train_data']
@@ -267,14 +251,30 @@ class Neurostack:
 
             # send prediction jobs to server
             else:
-                data = self.streams['ml'].get_prediction_data()
+                # TODO: get relevant data from device's data stream
                 if data is not None:
                     uuid = data['uuid']
                     eeg_data = data['eeg_data']
                     self.send_predict_data(uuid, eeg_data)
                     return
 
-            time.sleep(0.1)
+            time.sleep(0.02)
+
+    #
+    # Callback functions
+    #
+
+    def on_train_results(self, *args):
+        """Callback function for saving training results"""
+        results = args[0]
+
+    def on_predict_results(self, *args):
+        """Callback function for saving prediction results"""
+        results = args[0]
+
+    def print_results(self, *args):
+        """Prints out results"""
+        print(args)
 
     #
     # Other methods
