@@ -2,6 +2,7 @@ from socketIO_client import SocketIO
 from utils import generate_uuid
 from sanic import Sanic
 
+import argparse
 import json
 import socketio
 import time
@@ -20,7 +21,8 @@ class Neurostack:
 
         # sanic server connects to app
         self.sio_app = socketio.AsyncServer(async_mode='sanic')
-        self.sio_app.attach(Sanic())
+        self.sio_app_server = Sanic()
+        self.sio_app.attach(self.sio_app_server)
 
         # socketIO client connects to neurostack server
         self.sio_neurostack = None
@@ -179,6 +181,17 @@ class Neurostack:
         self.sio_app.on("predict", self.predict_handler)
         self.sio_app.on("generate_uuid", self.generate_uuid_handler)
 
+    def run(self, host='localhost', port=8002):
+        """
+        Runs Neurostack on host:port. This is used as an endpoint for
+        client-side communication.
+
+        :param host: local address to Neurostack on
+        :param port: port to run Neurostack on
+        :return: None
+        """
+        self.sio_app_server.run(host=host, port=port)
+
     async def train_handler(self, sid, args):
         """Handler for passing training data to Neurostack"""
         if not self.train_mode:
@@ -281,3 +294,29 @@ class Neurostack:
 
         info = [device.get_info() for device in devices_to_start]
         return info
+
+
+if __name__ == '__main__':
+
+    # parse command line arguments
+    parser = argparse.ArgumentParser(description='Run Neurostack')
+
+    parser.add_argument('--address', type=str, default='localhost:8002',
+                        help='ip:port to run Neurostack client on')
+    parser.add_argument('--server_address', type=str,
+                        help='ip:port of Neurostack server to connect to')
+
+    args = parser.parse_args()
+
+    # create and run neurostack!
+    neurostack = Neurostack()
+
+    # connect to neurostack server
+    if args.server_address is not None:
+        ip, port = args.server_address.split(':')
+        neurostack.neurostack_connect(ip=ip, port=port)
+
+    # run neurostack client
+    neurostack.initialize_handlers()
+    host, port = args.address.split(':')
+    neurostack.run(host=host, port=port)
