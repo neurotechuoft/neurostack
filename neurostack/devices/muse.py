@@ -13,9 +13,8 @@ class Muse(Device):
         super().__init__(device_id)
         self.data_stream = DataStream()
 
-        # TODO: somehow use this line
-        # self.time_diff = time.time() - self.streams['eeg'].data[-1][-1]
-        self.time_diff = 0      # difference between unix and muse time
+        # difference between unix and muse time
+        self.time_diff = 0
 
         # for generating fake data
         self._fake_muse = None
@@ -39,7 +38,8 @@ class Muse(Device):
 
         # create fake muse
         info = pylsl.StreamInfo(name='Muse', type='EEG', channel_count=4,
-                                nominal_srate=256, channel_format='float32', source_id='fake muse')
+                                nominal_srate=256, channel_format='float32',
+                                source_id='fake muse')
         info.desc().append_child_value('manufacturer', 'Muse')
         channels = info.desc().append_child('channels')
 
@@ -71,8 +71,8 @@ class Muse(Device):
         """
         # create thread that runs something which continuously streams data
         if fake_data:
-            eeg_data_thread = threading.Thread(target=self._create_fake_eeg_stream,
-                                               name='fake muse')
+            eeg_data_thread  = threading.Thread(
+                target=self._create_fake_eeg_stream, name='fake muse')
             eeg_data_thread.daemon = True
             eeg_data_thread.start()
 
@@ -93,7 +93,8 @@ class Muse(Device):
         # wait until there is data in the channels
         while not self.data_stream.has_data(channel_name):
             time.sleep(0.01)
-        self.time_diff = self.data_stream.get_latest_data(channel_name)
+        self.time_diff = time.time() - \
+                         self.data_stream.get_latest_data(channel_name)[0]
 
     def stop(self):
         """Stop streaming EEG data"""

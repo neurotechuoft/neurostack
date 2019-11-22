@@ -123,9 +123,6 @@ class DataStream:
         Takes a (copy of a) slice of data from channels at start_time for
         duration
 
-        TODO: figure out if we should return the timestamp with the data or
-        just the data
-
         :param channels: channel or list of channels to query
         :param start_time: start time for data. If None, returns all data
         :param duration: duration of data to get. If None, returns all data
@@ -144,7 +141,7 @@ class DataStream:
 
             # return all the data for channel if start time is not specified
             if start_time is None:
-                return self.channels[channel][:]
+                return [sample[1] for sample in self.channels[channel]]
 
             # find start index
             start = 0
@@ -156,7 +153,7 @@ class DataStream:
             # return all the data starting from start time if duration is not
             # specified
             if duration is None:
-                return self.channels[channel][start:]
+                return [sample[1] for sample in self.channels[channel][start:]]
 
             # find stop index
             stop_time = start_time + duration
@@ -167,7 +164,7 @@ class DataStream:
 
             # return time slice from start time to start time + duration if
             # both are specified
-            return self.channels[channel][start:end]
+            return [sample[1] for sample in self.channels[channel][start:end]]
 
         # get data for multiple channels--return a dict
         return_data = {}
