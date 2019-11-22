@@ -28,9 +28,8 @@ class Neurostack:
         # socketIO client connects to neurostack server
         self.sio_neurostack = None
 
-        # TODO: these should be dicts of uuid:results
-        self.train_results = []
-        self.predict_results = []
+        self.train_results = {}
+        self.predict_results = {}
 
     #
     # Methods for handling devices
@@ -187,6 +186,9 @@ class Neurostack:
         timestamp = args['timestamp']
         p300 = args['p300']
 
+        # create list for uuid if not done already
+        self.train_results[uuid] = self.train_results.get(uuid, [])
+
         # TODO: change API to specify device
         device = self.devices[0]
 
@@ -202,15 +204,19 @@ class Neurostack:
 
         self.send_train_data(uuid, data, p300)
 
-        while len(self.train_results) == 0:
+        # wait for results
+        while len(self.train_results[uuid]) == 0:
             time.sleep(.01)
-        return self.train_results.pop(0)
+        return self.train_results[uuid].pop(0)
 
     async def predict_handler(self, sid, args):
         """Handler for passing prediction data to Neurostack"""
         args = json.loads(args)
         uuid = args['uuid']
         timestamp = args['timestamp']
+
+        # create list for uuid if not done already
+        self.predict_results[uuid] = self.predict_results.get(uuid, [])
 
         # TODO: change API to specify device
         device = self.devices[0]
@@ -228,9 +234,10 @@ class Neurostack:
 
         self.send_predict_data(uuid, data)
 
-        while len(self.predict_results) == 0:
+        # wait for results
+        while len(self.predict_results[uuid]) == 0:
             time.sleep(.01)
-        return self.predict_results.pop(0)
+        return self.predict_results[uuid].pop(0)
 
     async def generate_uuid_handler(self, sid, args):
         """Handler for sending a request to the server to generate a UUID"""
@@ -243,12 +250,14 @@ class Neurostack:
     def on_train_results(self, *args):
         """Callback function for saving training results"""
         results = args[0]
-        self.train_results.append(results)
+        uuid = results['uuid']
+        self.train_results[uuid].append(results)
 
     def on_predict_results(self, *args):
         """Callback function for saving prediction results"""
         results = args[0]
-        self.predict_results.append(results)
+        uuid = results['uuid']
+        self.predict_results[uuid].append(results)
 
     def print_results(self, *args):
         """Prints out results"""
