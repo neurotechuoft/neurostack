@@ -107,3 +107,7 @@ class Muse(Device):
     def get_info(self):
         """Print info about device"""
         print("Device ID: " + str(self.device_id))
+
+    def get_time_diff(self):
+        """Return time offset"""
+        return self.time_diff

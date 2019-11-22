@@ -186,8 +186,8 @@ class Neurostack:
         timestamp = args['timestamp']
         p300 = args['p300']
 
-        # TODO: subtract time difference
-        # timestamp -= self.time_diff
+        # TODO: change API to specify device
+        timestamp -= self.devices[0].get_time_diff()
         package = [
             str(timestamp),
             str(p300),      # target
@@ -210,8 +210,8 @@ class Neurostack:
         uuid = args['uuid']
         timestamp = args['timestamp']
 
-        # TODO: subtract time difference
-        # timestamp -= self.time_diff
+        # TODO: change API to specify device
+        timestamp -= self.devices[0].get_time_diff()
         package = [
             str(timestamp),
             str(0),         # target
