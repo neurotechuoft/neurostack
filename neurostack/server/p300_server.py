@@ -168,7 +168,7 @@ class P300Service:
 
         results = {
             'uuid': uuid,
-            'p300': p300,
+            'p300': int(p300),
             'score': random.random()
         }
         return results

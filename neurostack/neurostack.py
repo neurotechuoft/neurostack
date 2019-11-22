@@ -28,6 +28,10 @@ class Neurostack:
         # socketIO client connects to neurostack server
         self.sio_neurostack = None
 
+        # TODO: these should be dicts of uuid:results
+        self.train_results = []
+        self.predict_results = []
+
     #
     # Methods for handling devices
     #
@@ -66,10 +70,7 @@ class Neurostack:
         for device in devices_to_start:
             device.stop()
 
-    def shutdown(self,
-                 list_of_devices=None,
-                 list_of_subscribers=None,
-                 list_of_tags=None):
+    def shutdown(self, list_of_devices=None):
         """
         Close connection to device, WebSocket connections to publishers, and tag sources.
 
@@ -187,21 +188,22 @@ class Neurostack:
         p300 = args['p300']
 
         # TODO: change API to specify device
+        device = self.devices[0]
+
+        # Wait until the device has enough data (ie. the time slice is complete)
+        # then take 100ms - 750ms window for training
+        while time.time() < timestamp + 0.75:
+            time.sleep(.01)
+
         timestamp -= self.devices[0].get_time_diff()
-        package = [
-            str(timestamp),
-            str(p300),      # target
-            str(1),         # 1 event total
-            str(uuid)       # epoch ID
-        ]
-        # TODO: wait until the device has enough data (ie. until the time slice
-        #       is complete), take the relevant data, and send it to
-        #       the neurostack server for processing
-        # self.marker_outlet.push_sample(package)
-        await self.start_event_loop()
+        data_dict = device.data_stream.get_eeg_data(start_time=timestamp + .1,
+                                                    num_samples=128)
+        data = list(data_dict.values())
+
+        self.send_train_data(uuid, data, p300)
 
         while len(self.train_results) == 0:
-            time.sleep(.1)
+            time.sleep(.01)
         return self.train_results.pop(0)
 
     async def predict_handler(self, sid, args):
@@ -211,54 +213,28 @@ class Neurostack:
         timestamp = args['timestamp']
 
         # TODO: change API to specify device
-        timestamp -= self.devices[0].get_time_diff()
-        package = [
-            str(timestamp),
-            str(0),         # target
-            str(1),         # 1 event total
-            str(uuid)       # epoch ID
-        ]
-        # TODO: wait until the device has enough data (ie. until the time slice
-        #       is complete), take the relevant data, and send it to
-        #       the neurostack server for processing
-        # self.marker_outlet.push_sample(package)
-        await self.start_event_loop()
+        device = self.devices[0]
 
-        while len(self.pred_results) == 0:
-            time.sleep(.1)
-        return self.pred_results.pop(0)
+        # Wait until the device has enough data (ie. the time slice is complete)
+        # then take 100ms - 750ms window for training. The window should
+        # contain 0.65s * 256Hz = 166 samples.
+        while time.time() < timestamp + 0.75:
+            time.sleep(.01)
+
+        timestamp -= self.devices[0].get_time_diff()
+        data_dict = device.data_stream.get_eeg_data(start_time=timestamp + .1,
+                                                    num_samples=128)
+        data = list(data_dict.values())
+
+        self.send_predict_data(uuid, data)
+
+        while len(self.predict_results) == 0:
+            time.sleep(.01)
+        return self.predict_results.pop(0)
 
     async def generate_uuid_handler(self, sid, args):
         """Handler for sending a request to the server to generate a UUID"""
         return generate_uuid()
-
-    async def start_event_loop(self):
-        """
-        Continuously pulls data and sends to server based on whether we are
-        training or predicting
-        """
-        data = None
-        while data is None:
-            # send training jobs to server
-            if self.train_mode:
-                # TODO: get relevant data from device's data stream
-                if data is not None:
-                    uuid = data['uuid']
-                    train_data = data['train_data']
-                    train_targets = data['train_targets']
-                    self.send_train_data(uuid, train_data, train_targets)
-                    return
-
-            # send prediction jobs to server
-            else:
-                # TODO: get relevant data from device's data stream
-                if data is not None:
-                    uuid = data['uuid']
-                    eeg_data = data['eeg_data']
-                    self.send_predict_data(uuid, eeg_data)
-                    return
-
-            time.sleep(0.02)
 
     #
     # Callback functions
@@ -267,10 +243,12 @@ class Neurostack:
     def on_train_results(self, *args):
         """Callback function for saving training results"""
         results = args[0]
+        self.train_results.append(results)
 
     def on_predict_results(self, *args):
         """Callback function for saving prediction results"""
         results = args[0]
+        self.predict_results.append(results)
 
     def print_results(self, *args):
         """Prints out results"""
@@ -282,7 +260,8 @@ class Neurostack:
 
     def get_info(self, list_of_devices=None) -> []:
         """
-        Return list of string representations of device info for specified devices (by calling get_info of each device).
+        Return list of string representations of device info for specified
+        devices (by calling get_info of each device).
         By default lists info of all devices under Neurostack.
 
         :return:
@@ -297,6 +276,8 @@ class Neurostack:
 
 
 if __name__ == '__main__':
+    # Example usage:
+    # python neurostack.py --server_address localhost:8001 --address localhost:8002
 
     # parse command line arguments
     parser = argparse.ArgumentParser(description='Run Neurostack')

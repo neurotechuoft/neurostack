@@ -118,15 +118,15 @@ class DataStream:
     # Methods for processing data
     #
 
-    def get_data(self, channels, start_time=None, duration=None):
+    def get_data(self, channels, start_time=None, num_samples=None):
         """
-        Takes a (copy of a) slice of data from channels at start_time for
-        duration
+        Takes a (copy of a) slice of data from channels at start_time for a
+        number of samples.
 
         :param channels: channel or list of channels to query
         :param start_time: start time for data. If None, returns all data
-        :param duration: duration of data to get. If None, returns all data
-                         after start time
+        :param num_samples: number of data samples to return per channel.
+                            If None, return all data after start_time
         :return: a list of data if there is only 1 channel given, else a dict
                  with channel names as keys and data as values.
         """
@@ -150,42 +150,39 @@ class DataStream:
                 if start == len(self.channels[channel]):
                     return []
 
-            # return all the data starting from start time if duration is not
-            # specified
-            if duration is None:
+            # return all the data starting from start time if number of samples
+            # is not specified
+            if num_samples is None:
                 return [sample[1] for sample in self.channels[channel][start:]]
 
-            # find stop index
-            stop_time = start_time + duration
-            end = start
-            while end < len(self.channels[channel]) and \
-                stop_time > self.channels[channel][end][0]:
-                end += 1
+            # find end index
+            end = min(len(self.channels[channel]), start + num_samples)
 
-            # return time slice from start time to start time + duration if
-            # both are specified
+            # return time slice from start time for number of samples if both
+            # are specified
             return [sample[1] for sample in self.channels[channel][start:end]]
 
         # get data for multiple channels--return a dict
         return_data = {}
 
         for channel in channels:
-            return_data[channel] = self.get_data(channel, start_time, duration)
+            return_data[channel] = self.get_data(channel, start_time,
+                                                 num_samples)
 
         return return_data
 
-    def get_eeg_data(self, start_time=None, duration=None):
+    def get_eeg_data(self, start_time=None, num_samples=None):
         """
-        Get data from EEG channels
+        Get data from EEG channels.
 
         :param start_time: start time for data. If None, returns all data
-        :param duration: duration of data to get. If None, returns all data
-                         after start time
-        :return:
+        :param num_samples: number of data samples to return per channel.
+                            If None, return all data after start_time
+        :return: a dict with channel names as keys and data as values
         """
         return self.get_data(channels=self._eeg_channel_names,
                              start_time=start_time,
-                             duration=duration)
+                             num_samples=num_samples)
 
     def get_latest_data(self, channels):
         """
