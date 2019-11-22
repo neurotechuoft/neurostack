@@ -118,57 +118,77 @@ class DataStream:
     # Methods for processing data
     #
 
-    def get_data(self, channels, start_time, duration):
+    def get_data(self, channels, start_time=None, duration=None):
         """
         Takes a (copy of a) slice of data from channels at start_time for
         duration
 
-        :param channels:
-        :param start_time:
-        :param duration:
+        TODO: figure out if we should return the timestamp with the data or
+        just the data
+
+        :param channels: channel or list of channels to query
+        :param start_time: start time for data. If None, returns all data
+        :param duration: duration of data to get. If None, returns all data
+                         after start time
+        :return: a list of data if there is only 1 channel given, else a dict
+                 with channel names as keys and data as values.
+        """
+        # get data for 1 channel--just return a list
+        # TODO: do with binary search
+        if not isinstance(channels, list):
+            channel = channels
+
+            # check to see that channel exists
+            if self.channels.get(channel) is None:
+                raise Exception(f"A channel with name {channel} does not exist")
+
+            # return all the data for channel if start time is not specified
+            if start_time is None:
+                return self.channels[channel][:]
+
+            # find start index
+            start = 0
+            while start_time > self.channels[channel][start][0]:
+                start += 1
+                if start == len(self.channels[channel]):
+                    return []
+
+            # return all the data starting from start time if duration is not
+            # specified
+            if duration is None:
+                return self.channels[channel][start:]
+
+            # find stop index
+            stop_time = start_time + duration
+            end = start
+            while end < len(self.channels[channel]) and \
+                stop_time > self.channels[channel][end][0]:
+                end += 1
+
+            # return time slice from start time to start time + duration if
+            # both are specified
+            return self.channels[channel][start:end]
+
+        # get data for multiple channels--return a dict
+        return_data = {}
+
+        for channel in channels:
+            return_data[channel] = self.get_data(channel, start_time, duration)
+
+        return return_data
+
+    def get_eeg_data(self, start_time=None, duration=None):
+        """
+        Get data from EEG channels
+
+        :param start_time: start time for data. If None, returns all data
+        :param duration: duration of data to get. If None, returns all data
+                         after start time
         :return:
         """
-        return_data = {}
-
-        for channel in channels:
-            if self.channels.get(channel) is not None:
-
-                data_slice = []
-
-                stop_time = start_time + duration
-
-                for data in self.channels[channel]:
-                    if start_time <= data[0] <= stop_time:
-                        data_slice.append(copy.deepcopy(data))
-
-                return_data[channel] = data_slice
-
-            else:
-                print(f"A channel with name {channel} does not exist")
-
-        return return_data
-
-    def get_all_data(self, channels):
-        """
-        Gets (a copy of) all available data from the list of channels
-
-        :param channels:
-        :return
-        """
-        if not isinstance(channels, list):
-            return copy.deepcopy(self.channels[channels])
-
-        return_data = {}
-
-        for channel in channels:
-            if self.channels.get(channel) is not None:
-
-                return_data[channel] = copy.deepcopy(self.channels[channel])
-
-            else:
-                print(f"A channel with name {channel} does not exist")
-
-        return return_data
+        return self.get_data(channels=self._eeg_channel_names,
+                             start_time=start_time,
+                             duration=duration)
 
     def get_latest_data(self, channels):
         """
@@ -179,7 +199,7 @@ class DataStream:
         with channel names as keys and data as values.
         """
         if not isinstance(channels, list):
-            return copy.deepcopy(self.channels[channels][-1])
+            return self.channels[channels][-1]
 
         return_data = {}
 
@@ -189,7 +209,7 @@ class DataStream:
                 if not self.channels[channel]:
                     return_data[channel] = []
                 else:
-                    return_data[channel] = copy.deepcopy(self.channels[channel][-1])
+                    return_data[channel] = self.get_latest_data(channel)
 
             else:
                 print(f"A channel with name {channel} does not exist")
