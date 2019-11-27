@@ -21,7 +21,7 @@ def print_results(*args):
     print(args[0])
 
 
-# p300 server running on localhost:8001
+# p300 server running on localhost:8002
 socket_client = SocketIO('localhost', 8002)
 socket_client.connect()
 
@@ -31,13 +31,23 @@ timestamp = time.time()
 p300 = 1
 
 
-# socket_client.emit('generate_uuid', None, print_results)
-# socket_client.wait_for_callbacks(seconds=1)
+socket_client.emit('generate_uuid', None, print_results)
+socket_client.wait_for_callbacks(seconds=1)
 
 
-for i in range(40):
+for i in range(20):
     timestamp = time.time()
     p300 = random.choice([0, 1])
+
+    args = json.dumps({'uuid': uuid, 'timestamp': timestamp, 'p300': p300})
+    socket_client.emit("train", args, print_results)
+    socket_client.wait_for_callbacks(seconds=2)
+
+    time.sleep(1)
+
+
+for i in range(5):
+    timestamp = time.time()
 
     args = json.dumps({'uuid': uuid, 'timestamp': timestamp})
     socket_client.emit("predict", args, print_results)
@@ -45,10 +55,5 @@ for i in range(40):
 
     time.sleep(1)
 
-    # args = json.dumps({'uuid': uuid, 'timestamp': timestamp, 'p300': p300})
-    # socket_client.emit("train", args, print_results)
-    # socket_client.wait_for_callbacks(seconds=2)
-    #
-    # time.sleep(1)
 
 socket_client.disconnect()

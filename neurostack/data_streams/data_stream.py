@@ -4,6 +4,7 @@ methods taken from https://github.com/kaczmarj/rteeg
 """
 import numpy as np
 import pylsl
+import threading
 import copy
 
 
@@ -26,6 +27,7 @@ class DataStream:
         self.channels = {}
 
         self._eeg_thread = None
+        self._eeg_thread_active = False
         self._eeg_inlet = None
         self._eeg_channel_names = None
 
@@ -47,11 +49,20 @@ class DataStream:
             this_child = this_child.next_sibling('channel')
         self._eeg_channel_names = ch_names
 
+    def lsl_start(self):
+        """Start recording data from LSL stream"""
+        self._eeg_thread_active = True
+
         # record data to channels
         self._eeg_thread = threading.Thread(target=self._record_lsl_data_indefinitely,
                                             name='lsl')
         self._eeg_thread.daemon = True
         self._eeg_thread.start()
+
+    def lsl_stop(self):
+        """Stop recording data from LSL stream"""
+        self._eeg_thread_active = False
+        self._eeg_thread = None
 
     def _record_lsl_data_indefinitely(self):
         """
@@ -62,17 +73,18 @@ class DataStream:
         """
         # create channels
         for channel_name in self._eeg_channel_names:
-            self.add_channel(channel_name)
+            if channel_name not in self.list_channels():
+                self.add_channel(channel_name)
 
         # continuously pull data
-        while True:
+        while self._eeg_thread_active:
             samples, timestamp = self._eeg_inlet.pull_sample()
             time_correction = self._eeg_inlet.time_correction()
 
             # add pulled samples to channels
             for i in range(len(samples)):
                 self.add_data(self._eeg_channel_names[i],
-                              [timestamp + time_correction] + samples[i])
+                              [timestamp + time_correction] + [samples[i]])
 
     def add_channel(self, name):
         """
@@ -106,62 +118,83 @@ class DataStream:
     # Methods for processing data
     #
 
-    def get_data(self, channels, start_time, duration):
+    def get_data(self, channels, start_time=None, num_samples=None):
         """
-        Takes a (copy of a) slice of data from channels at start_time for
-        duration
+        Takes a (copy of a) slice of data from channels at start_time for a
+        number of samples.
 
-        :param channels:
-        :param start_time:
-        :param duration:
-        :return:
+        :param channels: channel or list of channels to query
+        :param start_time: start time for data. If None, returns all data
+        :param num_samples: number of data samples to return per channel.
+                            If None, return all data after start_time
+        :return: a list of data if there is only 1 channel given, else a dict
+                 with channel names as keys and data as values.
         """
+        # get data for 1 channel--just return a list
+        # TODO: do with binary search
+        if not isinstance(channels, list):
+            channel = channels
+
+            # check to see that channel exists
+            if self.channels.get(channel) is None:
+                raise Exception(f"A channel with name {channel} does not exist")
+
+            # return all the data for channel if start time is not specified
+            if start_time is None:
+                return [sample[1] for sample in self.channels[channel]]
+
+            # find start index
+            start = 0
+            while start_time > self.channels[channel][start][0]:
+                start += 1
+                if start == len(self.channels[channel]):
+                    return []
+
+            # return all the data starting from start time if number of samples
+            # is not specified
+            if num_samples is None:
+                return [sample[1] for sample in self.channels[channel][start:]]
+
+            # find end index
+            end = min(len(self.channels[channel]), start + num_samples)
+
+            # return time slice from start time for number of samples if both
+            # are specified
+            return [sample[1] for sample in self.channels[channel][start:end]]
+
+        # get data for multiple channels--return a dict
         return_data = {}
 
         for channel in channels:
-            if self.channels.get(channel) is not None:
-
-                data_slice = []
-
-                stop_time = start_time + duration
-
-                for data in self.channels[channel]:
-                    if start_time <= data[0] <= stop_time:
-                        data_slice.append(copy.deepcopy(data))
-
-                return_data[channel] = data_slice
-
-            else:
-                print(f"A channel with name {channel} does not exist")
+            return_data[channel] = self.get_data(channel, start_time,
+                                                 num_samples)
 
         return return_data
 
-    def get_all_data(self, channels):
+    def get_eeg_data(self, start_time=None, num_samples=None):
         """
-        Gets (a copy of) all available data from the list of channels
+        Get data from EEG channels.
 
-        :param channels:
-        :return
+        :param start_time: start time for data. If None, returns all data
+        :param num_samples: number of data samples to return per channel.
+                            If None, return all data after start_time
+        :return: a dict with channel names as keys and data as values
         """
-        return_data = {}
-
-        for channel in channels:
-            if self.channels.get(channel) is not None:
-
-                return_data[channel] = copy.deepcopy(self.channels[channel])
-
-            else:
-                print(f"A channel with name {channel} does not exist")
-
-        return return_data
+        return self.get_data(channels=self._eeg_channel_names,
+                             start_time=start_time,
+                             num_samples=num_samples)
 
     def get_latest_data(self, channels):
         """
         Gets (a copy of the) latest data entry from channels
 
         :param channels:
-        :return:
+        :return: a list of data if there is only 1 channel given, else a dict
+        with channel names as keys and data as values.
         """
+        if not isinstance(channels, list):
+            return self.channels[channels][-1]
+
         return_data = {}
 
         for channel in channels:
@@ -170,7 +203,7 @@ class DataStream:
                 if not self.channels[channel]:
                     return_data[channel] = []
                 else:
-                    return_data[channel] = copy.deepcopy(self.channels[channel][-1])
+                    return_data[channel] = self.get_latest_data(channel)
 
             else:
                 print(f"A channel with name {channel} does not exist")
@@ -207,6 +240,15 @@ class DataStream:
                 raise (ValueError, f"{data} data does not exist in the channel named {channel}")
         else:
             print(f"A channel with name {channel} does not exist")
+
+    def has_data(self, channel):
+        """
+        Checks if a specific channel has any data.
+
+        :param channel: channel
+        :return: True if the channel has data, False otherwise
+        """
+        return not len(self.channels.get(channel, [])) == 0
 
     #
     # Stream information
