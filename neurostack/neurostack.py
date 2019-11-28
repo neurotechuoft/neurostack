@@ -1,6 +1,6 @@
 from devices.muse import Muse
 from socketIO_client import SocketIO
-from devices.openbci import OpenBCI
+#from devices.openbci import OpenBCI
 from utils import generate_uuid
 from sanic import Sanic
 
@@ -299,18 +299,14 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    # TODO: add something to specify which devices get passed in
-    # muse = Muse()
-    # muse.connect(fake_data=True)
-    # muse.start()
-    def print_stream(sample):
-        pass
-    openbci = OpenBCI()
-    openbci.connect()
-    openbci.start(print_stream)
+    #TODO: add something to specify which devices get passed in
+    muse = Muse()
+    muse.connect(fake_data=True)
+    muse.start()
+
 
     # create and run neurostack!
-    devices = [openbci]
+    devices = [muse]
     neurostack = Neurostack(devices=devices)
 
     # connect to neurostack server

@@ -42,6 +42,7 @@ class OpenBCI(Device):
 
         :return:
         """
+        
         self.openbci_cyton.start_stream(callback)
 
     def stop(self) -> None:
