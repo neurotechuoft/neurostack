@@ -34,7 +34,7 @@ class OpenBCI(Device):
         :param device_id:
         :return:
         """
-        self.openbci_cyton = OpenBCICyton(port='COM5', daisy=False)
+        self.openbci_cyton = OpenBCICyton( daisy=False)
 
     def start(self,callback) -> None:
         """
@@ -42,7 +42,7 @@ class OpenBCI(Device):
 
         :return:
         """
-        
+
         self.openbci_cyton.start_stream(callback)
 
     def stop(self) -> None:
