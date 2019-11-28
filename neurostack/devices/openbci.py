@@ -1,7 +1,7 @@
-import openbci
-
+from pyOpenBCI import OpenBCICyton
 from devices.device import Device
-
+from pylsl import StreamInfo, StreamOutlet
+import numpy as np
 
 class OpenBCI(Device):
 
@@ -12,7 +12,7 @@ class OpenBCI(Device):
     def available_devices():
         """
         Returns list of available OpenBCI devices by device name
-        
+
         Works on Linux, untested for other OS
         """
         # devs = usb.core.find(find_all=True, idVendor=0x0403, idProduct=0x6015)
@@ -34,22 +34,22 @@ class OpenBCI(Device):
         :param device_id:
         :return:
         """
-        self.openbci_cyton = openbci.OpenBCICyton()
+        self.openbci_cyton = OpenBCICyton(port='COM5', daisy=False)
 
-    def start(self) -> None:
+    def start(self,callback) -> None:
         """
         Start streaming EEG from device, and publish data to subscribers.
-    
+
         :return:
         """
-        self.openbci_cyton.start_streaming(callback)
+        self.openbci_cyton.start_stream(callback)
 
     def stop(self) -> None:
         """
         Stop streaming EEG data from device, and stop publishing data to
         subscribers. Connection to device remains intact, and device is not
         turned off.
-    
+
         :return:
         """
         self.openbci_cyton.stop()
@@ -58,15 +58,15 @@ class OpenBCI(Device):
         """
         Close connection to device, WebSocket connections to publishers, and tag
         sources.
-    
+
         :return:
         """
         self.openbci_cyton.disconnect()
 
     def get_info(self) -> None:
         """
-        Get information about the device including device type, connection type, electrode names, device type, stream time, etc... 
-    
+        Get information about the device including device type, connection type, electrode names, device type, stream time, etc...
+
         :return:
         """
         pass
