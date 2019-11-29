@@ -10,14 +10,15 @@ To run the Neurostack server, use `python start_server.py`. It will run on local
 
 To run the Neurostack client from the command line, use `python neurostack.py`.
 
-It takes two arguments:
+It takes three optional arguments:
 
-> `--address`: ip: port to run Neurostack client on. The default is localhost:8002.  
-`--server_address`: ip: port for Neurostack server to connect to.
+> `--address`: ip: port to run Neurostack client on. The default is localhost:8002.\
+>`--server_address`: ip: port for Neurostack server to connect to.\
+>`--use_fake_data`: Use flag to generate fake data.
 
 Example Usage:
 
->`python neurostack.py --server_address localhost:8001 --address localhost:8002`
+>`python neurostack.py --server_address localhost:8001 --address localhost:8002 --use_fake_data`
 
 
 ### Training and making predictions

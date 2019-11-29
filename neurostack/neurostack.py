@@ -185,6 +185,7 @@ class Neurostack:
         uuid = args['uuid']
         timestamp = args['timestamp']
         p300 = args['p300']
+        # TODO: check type of p300 (I believe it has to be 0 or 1?)
 
         # create list for uuid if not done already
         self.train_results[uuid] = self.train_results.get(uuid, [])
@@ -298,12 +299,14 @@ if __name__ == '__main__':
                         help='ip:port to run Neurostack client on')
     parser.add_argument('--server_address', type=str,
                         help='ip:port of Neurostack server to connect to')
+    parser.add_argument('--use_fake_data', action='store_false',
+                        help='Use flag to generate fake data')
 
     args = parser.parse_args()
 
     # TODO: add something to specify which devices get passed in
     muse = Muse()
-    muse.connect(fake_data=True)
+    muse.connect(fake_data=args.use_fake_data)
     muse.start()
 
     # create and run neurostack!
