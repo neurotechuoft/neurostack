@@ -4,13 +4,18 @@ Streaming brain waves to machine learning services, made easy.
 
 ## P300 Service
 
-### Setup
+### Command Line Interface
 
-To setup for the Muse:
+To run neurostack from the command line, use ```python neurostack.py```.
 
-1. Stream data from the Muse with BlueMuse. Check out how to do that with MuseLSL [here](https://github.com/alexandrebarachant/muse-lsl).
-2. Run `python start_muse.py`
-3. Connect to the backend with SocketIO, and start sending jobs!
+It takes two arguments:
+
+> `--address`: ip: port to run Neurostack client on. The default is localhost:8002.  
+`--server_address`: ip: port for Neurostack server to connect to.
+
+Example Usage: 
+
+>```python neurostack.py --server_address localhost:8001 --address localhost:8002```
 
 ### Training and making predictions
 
@@ -96,7 +101,6 @@ Returns:
 #### train
 Give a training example to the classifier.
 
-Parameters:
 Parameters:
 > `uuid`: UUID of whoever is making a prediction. This will determine which classifier we will load up and use.  
 `timestamp`: timestamp of chunk of data  
