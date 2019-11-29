@@ -33,7 +33,7 @@ for i in range(20):
 
     args = json.dumps({'uuid': uuid, 'timestamp': timestamp, 'p300': p300})
     socket_client.emit("train", args)
-    socket_client.wait(seconds=1)
+    socket_client.wait(seconds=2)
 
 # test predictions
 for i in range(5):
@@ -41,6 +41,6 @@ for i in range(5):
 
     args = json.dumps({'uuid': uuid, 'timestamp': timestamp})
     socket_client.emit("predict", args)
-    socket_client.wait(seconds=1)
+    socket_client.wait(seconds=2)
 
 socket_client.disconnect()
