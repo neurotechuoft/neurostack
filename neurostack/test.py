@@ -13,7 +13,7 @@ socket_client = SocketIO('localhost', 8002)
 socket_client.connect()
 
 # initialize handlers
-socket_client.on('uuid', print_results)
+socket_client.on('generate_uuid', print_results)
 socket_client.on('train', print_results)
 socket_client.on('predict', print_results)
 

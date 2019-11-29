@@ -244,7 +244,7 @@ class Neurostack:
     async def generate_uuid_handler(self, sid, args):
         """Handler for sending a request to the server to generate a UUID"""
         uuid = generate_uuid()
-        await self.sio_app.emit('uuid', uuid)
+        await self.sio_app.emit('generate_uuid', uuid)
 
     #
     # Callback functions
