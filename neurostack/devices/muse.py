@@ -71,7 +71,7 @@ class Muse(Device):
         """
         # create thread that runs something which continuously streams data
         if fake_data:
-            eeg_data_thread  = threading.Thread(
+            eeg_data_thread = threading.Thread(
                 target=self._create_fake_eeg_stream, name='fake muse')
             eeg_data_thread.daemon = True
             eeg_data_thread.start()
