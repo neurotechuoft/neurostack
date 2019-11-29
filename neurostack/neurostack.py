@@ -21,7 +21,7 @@ class Neurostack:
         self.devices = devices
 
         # sanic server connects to app
-        self.sio_app = socketio.AsyncServer(async_mode='sanic', cors_allowed_origins='*', engineio_logger=True)
+        self.sio_app = socketio.AsyncServer(async_mode='sanic', cors_allowed_origins='*')
         self.sio_app_server = Sanic()
         self.sio_app.attach(self.sio_app_server)
 
@@ -207,10 +207,8 @@ class Neurostack:
         # wait for results
         while len(self.train_results[uuid]) == 0:
             time.sleep(.01)
-
         result = self.train_results[uuid].pop(0)
         await self.sio_app.emit("train", result)
-        return result
 
     async def predict_handler(self, sid, args):
         """Handler for passing prediction data to Neurostack"""
@@ -240,11 +238,13 @@ class Neurostack:
         # wait for results
         while len(self.predict_results[uuid]) == 0:
             time.sleep(.01)
-        return self.predict_results[uuid].pop(0)
+        result =  self.predict_results[uuid].pop(0)
+        await self.sio_app.emit("predict", result)
 
     async def generate_uuid_handler(self, sid, args):
         """Handler for sending a request to the server to generate a UUID"""
-        return generate_uuid()
+        uuid = generate_uuid()
+        await self.sio_app.emit('uuid', uuid)
 
     #
     # Callback functions
