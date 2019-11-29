@@ -12,10 +12,12 @@ def on_retrieve_prediction_results(*args):
     print(f'p300: {p300}')
     print(f'score: {score}')
 
+
 def on_train_results(*args):
     sid = args[0]
     accuracy = args[1]
     print(f'accuracy: {accuracy}')
+
 
 def print_results(*args):
     print(args[0])
