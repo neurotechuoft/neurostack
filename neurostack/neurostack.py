@@ -21,7 +21,7 @@ class Neurostack:
         self.devices = devices
 
         # sanic server connects to app
-        self.sio_app = socketio.AsyncServer(async_mode='sanic', cors_allowed_origins='*', engineio_logger=True)
+        self.sio_app = socketio.AsyncServer(async_mode='sanic', cors_allowed_origins='*')
         self.sio_app_server = Sanic()
         self.sio_app.attach(self.sio_app_server)
 
@@ -185,6 +185,7 @@ class Neurostack:
         uuid = args['uuid']
         timestamp = args['timestamp']
         p300 = args['p300']
+        # TODO: check type of p300 (I believe it has to be 0 or 1?)
 
         # create list for uuid if not done already
         self.train_results[uuid] = self.train_results.get(uuid, [])
@@ -207,10 +208,8 @@ class Neurostack:
         # wait for results
         while len(self.train_results[uuid]) == 0:
             time.sleep(.01)
-
         result = self.train_results[uuid].pop(0)
         await self.sio_app.emit("train", result)
-        return result
 
     async def predict_handler(self, sid, args):
         """Handler for passing prediction data to Neurostack"""
@@ -240,11 +239,13 @@ class Neurostack:
         # wait for results
         while len(self.predict_results[uuid]) == 0:
             time.sleep(.01)
-        return self.predict_results[uuid].pop(0)
+        result =  self.predict_results[uuid].pop(0)
+        await self.sio_app.emit("predict", result)
 
     async def generate_uuid_handler(self, sid, args):
         """Handler for sending a request to the server to generate a UUID"""
-        return generate_uuid()
+        uuid = generate_uuid()
+        await self.sio_app.emit('generate_uuid', uuid)
 
     #
     # Callback functions
@@ -298,12 +299,14 @@ if __name__ == '__main__':
                         help='ip:port to run Neurostack client on')
     parser.add_argument('--server_address', type=str,
                         help='ip:port of Neurostack server to connect to')
+    parser.add_argument('--use_fake_data', action='store_false',
+                        help='Use flag to generate fake data')
 
     args = parser.parse_args()
 
     # TODO: add something to specify which devices get passed in
     muse = Muse()
-    muse.connect(fake_data=True)
+    muse.connect(fake_data=args.use_fake_data)
     muse.start()
 
     # create and run neurostack!
