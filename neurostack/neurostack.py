@@ -30,6 +30,7 @@ class Neurostack:
 
         self.train_results = {}
         self.predict_results = {}
+        self.stream_raw_data = {}
 
     #
     # Methods for handling devices
@@ -164,9 +165,17 @@ class Neurostack:
 
     def initialize_handlers(self):
         """Initialize handlers for client-side communication"""
+        # streaming raw data
+        self.sio_app.on("start_streaming_raw_data", self.start_streaming_raw_data_handler)
+        self.sio_app.on("stop_streaming_raw_data", self.stop_streaming_raw_data)
+
+        # training Neurostack model
         self.sio_app.on("train", self.train_handler)
         self.sio_app.on("predict", self.predict_handler)
+
+        # misc
         self.sio_app.on("generate_uuid", self.generate_uuid_handler)
+
 
     def run(self, host='localhost', port=8002):
         """
@@ -178,6 +187,44 @@ class Neurostack:
         :return: None
         """
         self.sio_app_server.run(host=host, port=port)
+
+    async def start_streaming_raw_data_handler(self, sid, args):
+        """
+        Handler for streaming raw data
+
+        :param sid: session ID (not important)
+        :param args: arguments passed to this function. This should include:
+            uuid: universally unique ID of user who wants to stop streaming
+        """
+        uuid = args['uuid']
+        self.stream_raw_data[uuid] = True
+
+        # keep track of data from previous while loop iteration, so that the
+        # same data is not sent twice.
+        prev_data = None
+        while self.stream_raw_data[uuid]:
+            # TODO: devices[0] is the Muse that we set at the bottom, but we
+            # want to support multiple or differen devices
+            raw_data = self.devices[0].data_stream.get_latest_data()
+
+            # TODO: raw data can be either a list or a dict right now, should we
+            # just stick with dict?
+
+            # in case while loop is running faster than device streaming rate
+            if raw_data != prev_data:
+                await self.sio_app.emit('raw_data', raw_data)
+                prev_data = raw_data
+
+    async def stop_streaming_raw_data_handler(self, sid, args):
+        """
+        Handler to tell neurostack to stop streaming raw data
+
+        :param sid: session ID (not important)
+        :param args: arguments passed to this function. This should include:
+            uuid: universally unique ID of user who wants to stop streaming
+        """
+        uuid = args['uuid']
+        self.stream_raw_data[uuid] = False
 
     async def train_handler(self, sid, args):
         """Handler for passing training data to Neurostack"""

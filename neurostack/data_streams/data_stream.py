@@ -184,11 +184,12 @@ class DataStream:
                              start_time=start_time,
                              num_samples=num_samples)
 
-    def get_latest_data(self, channels):
+    def get_latest_data(self, channels=self._eeg_channel_names):
         """
         Gets (a copy of the) latest data entry from channels
 
-        :param channels:
+        :param channels: names of channels to get data from, defaults to 
+                         _eeg_channel_names
         :return: a list of data if there is only 1 channel given, else a dict
         with channel names as keys and data as values.
         """

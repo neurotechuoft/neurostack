@@ -5,6 +5,7 @@ class Device(ABC):
 
     def __init__(self, device_id=None):
         self.device_id = device_id
+        self.data_stream = DataStream()
 
     @abstractmethod
     def connect(self, device_id=None) -> None:
