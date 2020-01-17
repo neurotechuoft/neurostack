@@ -4,6 +4,7 @@ from utils import generate_uuid
 from sanic import Sanic
 
 import argparse
+import asyncio
 import json
 import socketio
 import time
@@ -167,7 +168,7 @@ class Neurostack:
         """Initialize handlers for client-side communication"""
         # streaming raw data
         self.sio_app.on("start_streaming_raw_data", self.start_streaming_raw_data_handler)
-        self.sio_app.on("stop_streaming_raw_data", self.stop_streaming_raw_data)
+        self.sio_app.on("stop_streaming_raw_data", self.stop_streaming_raw_data_handler)
 
         # training Neurostack model
         self.sio_app.on("train", self.train_handler)
@@ -196,6 +197,7 @@ class Neurostack:
         :param args: arguments passed to this function. This should include:
             uuid: universally unique ID of user who wants to stop streaming
         """
+        args = json.loads(args)
         uuid = args['uuid']
         self.stream_raw_data[uuid] = True
 
@@ -203,17 +205,20 @@ class Neurostack:
         # same data is not sent twice.
         prev_data = None
         while self.stream_raw_data[uuid]:
+
             # TODO: devices[0] is the Muse that we set at the bottom, but we
-            # want to support multiple or differen devices
-            raw_data = self.devices[0].data_stream.get_latest_data()
+            # want to support multiple or different devices
+            data_stream = self.devices[0].data_stream
+            eeg_channel_names = data_stream.get_eeg_channels()
+            raw_data = data_stream.get_latest_data(eeg_channel_names)
 
             # TODO: raw data can be either a list or a dict right now, should we
             # just stick with dict?
 
             # in case while loop is running faster than device streaming rate
             if raw_data != prev_data:
-                await self.sio_app.emit('raw_data', raw_data)
                 prev_data = raw_data
+                await self.sio_app.emit('raw_data', raw_data)
 
     async def stop_streaming_raw_data_handler(self, sid, args):
         """
@@ -223,8 +228,11 @@ class Neurostack:
         :param args: arguments passed to this function. This should include:
             uuid: universally unique ID of user who wants to stop streaming
         """
+        args = json.loads(args)
         uuid = args['uuid']
         self.stream_raw_data[uuid] = False
+
+        await self.sio_app.emit('raw_data', "streaming has stopped")
 
     async def train_handler(self, sid, args):
         """Handler for passing training data to Neurostack"""
@@ -346,7 +354,7 @@ if __name__ == '__main__':
                         help='ip:port to run Neurostack client on')
     parser.add_argument('--server_address', type=str,
                         help='ip:port of Neurostack server to connect to')
-    parser.add_argument('--use_fake_data', action='store_false',
+    parser.add_argument('--use_fake_data', action='store_true',
                         help='Use flag to generate fake data')
 
     args = parser.parse_args()

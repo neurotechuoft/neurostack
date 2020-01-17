@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from data_streams.data_stream import DataStream
+
 
 class Device(ABC):
 
