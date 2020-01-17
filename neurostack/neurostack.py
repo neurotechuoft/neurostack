@@ -299,7 +299,7 @@ if __name__ == '__main__':
                         help='ip:port to run Neurostack client on')
     parser.add_argument('--server_address', type=str,
                         help='ip:port of Neurostack server to connect to')
-    parser.add_argument('--use_fake_data', action='store_false',
+    parser.add_argument('--use_fake_data', action='store_true',
                         help='Use flag to generate fake data')
 
     args = parser.parse_args()
