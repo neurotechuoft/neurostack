@@ -35,7 +35,7 @@ def verify_password(stored_password, provided_password):
     return pwdhash == stored_password
 
 
-class P300Service:
+class NeurostackServer:
     def __init__(self):
         self.sio = socketio.AsyncServer(async_mode='sanic')
         self.app = Sanic()
@@ -76,9 +76,48 @@ class P300Service:
             print(f'Cannot load classifier')
             return False
 
-    async def train_classifier(self, sid, args):
+    async def left_right_train(self, sid, args):
         """
-        Endpoint for training classifier--given enough data, will train
+        Endpoint for training left right classifier
+
+        :param sid: Socket IO session ID, automatically given by connection
+        :param args: arguments from client. This should be in the format
+                     {
+                         'uuid': client UUID
+                         'data': EEG data to use for training
+                         'left': True or False
+                     }
+        :returns: None if there is not enough data for training, or the current
+                  model accuracy in the format
+                  {
+                      'uuid': client UUID
+                      'acc': current training accuracy
+                  }
+        """
+        pass
+
+    async def left_right_predict(self, sid, args):
+        """
+        Endpoint for making predictions with trained p300 classifier
+
+        :param sid: Socket IO session ID, automatically given by connection
+        :param args: arguments from client. This should be in the format
+                     {
+                         'uuid': client UUID
+                         'data': EEG data to make prediction on
+                     }
+        :returns: prediction results in the format
+                  {
+                      'uuid': client UUID
+                      'left': True or False result of model prediction
+                      'score': confidence value of prediction between 0 and 1
+                  }
+        """
+        pass
+
+    async def p300_train(self, sid, args):
+        """
+        Endpoint for training p300--given enough data, will train
         classifier
 
         :param sid: Socket IO session ID, automatically given by connection
@@ -94,7 +133,6 @@ class P300Service:
                       'uuid': client UUID
                       'acc': current training accuracy
                   }
-
         """
         # load arguments, generate UUID if none is provided
         uuid = args['uuid'] if args['uuid'] != 'None' else generate_uuid()
@@ -132,9 +170,9 @@ class P300Service:
 
         return results
 
-    async def retrieve_prediction_results(self, sid, args):
+    async def p300_predict(self, sid, args):
         """
-        Endpoint for making predictions with trained classifier
+        Endpoint for making predictions with trained p300 classifier
 
         :param sid: Socket IO session ID, automatically given by connection
         :param args: arguments from client. This should be in the format
@@ -177,7 +215,7 @@ class P300Service:
     # For testing
     #
 
-    async def retrieve_prediction_results_test(self, sid, args):
+    async def test_predict(self, sid, args):
         """
         Tests endpoint for making predictions with trained classifier
 
@@ -199,7 +237,7 @@ class P300Service:
         }
         return results
 
-    async def train_classifier_test(self, sid, args):
+    async def test_train(self, sid, args):
         """
         Tests endpoint for training classifier
 
@@ -223,9 +261,12 @@ class P300Service:
     def initialize_handlers(self):
         """Initialize handlers for server"""
         # train classifier and predict
-        self.sio.on("retrieve_prediction_results", self.retrieve_prediction_results)
-        self.sio.on("train_classifier", self.train_classifier)
+        self.sio.on("p300_train", self.p300_train)
+        self.sio.on("p300_predict", self.p300_predict)
+
+        self.sio.on("left_right_train", self.left_right_train)
+        self.sio.on("left_right_predict", self.left_right_predict)
 
         # for testing
-        self.sio.on("predict_test", self.retrieve_prediction_results_test)
-        self.sio.on("train_test", self.train_classifier_test)
+        self.sio.on("train_test", self.test_train)
+        self.sio.on("predict_test", self.test_predict)
