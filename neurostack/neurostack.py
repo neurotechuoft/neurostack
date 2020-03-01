@@ -81,7 +81,7 @@ class Neurostack:
     # Methods for handling server-side communication
     #
 
-    def neurostack_connect(self, ip='35.222.93.233', port=8001):
+    def neurostack_connect(self, ip='neurostack.neurotechuoft.com', port=8001):
         """
         Connects to neurostack server at ip:port. If no arguments for ip and
         port are given, then connects to the default hardcoded address for a
