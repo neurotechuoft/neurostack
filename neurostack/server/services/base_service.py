@@ -25,7 +25,7 @@ class BaseService(ABC):
                      to train on.
         :return: Results of training / accuracy score
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def predict(self, *args):
@@ -36,7 +36,7 @@ class BaseService(ABC):
                      predictions on.
         :return: Results of prediction
         """
-        pass
+        raise NotImplementedError
 
     #
     #   Helper methods
