@@ -213,5 +213,5 @@ class NeurostackServer:
         self.sio.on("left_right_predict", self.left_right_predict)
 
         # for testing
-        self.sio.on("train_test", self.test_train)
-        self.sio.on("predict_test", self.test_predict)
+        self.sio.on("test_train", self.test_train)
+        self.sio.on("test_predict", self.test_predict)
