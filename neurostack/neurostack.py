@@ -214,7 +214,7 @@ class Neurostack:
             server_endpoint="left_right_train",
             uuid=args['uuid'],
             timestamp=args['timestamp'],
-            label=args['']
+            label=args['left']
         )
 
     async def left_right_predict_handler(self, sid, args):

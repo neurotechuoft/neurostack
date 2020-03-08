@@ -52,7 +52,7 @@ class BaseService(ABC):
         if not os.path.exists('clfs'):
             os.makedirs('clfs')
 
-        if self.clf[uuid] is not None:
+        if self.clf.get(uuid) is not None:
             ml.save(f'clfs/{uuid}', self.clf[uuid])
             return True
 
@@ -69,6 +69,7 @@ class BaseService(ABC):
             if self.clf.get(uuid) is None:
                 self.clf[uuid] = ml.load(f'clfs/{uuid}')
             return True
+            
         except FileNotFoundError:
             print(f'Cannot load classifier')
             return False
