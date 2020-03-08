@@ -81,7 +81,7 @@ class Neurostack:
     # Methods for handling server-side communication
     #
 
-    def neurostack_connect(self, ip='35.222.93.233', port=8001):
+    def neurostack_connect(self, ip='neurostack.neurotechuoft.com', port=8001):
         """
         Connects to neurostack server at ip:port. If no arguments for ip and
         port are given, then connects to the default hardcoded address for a
@@ -94,27 +94,29 @@ class Neurostack:
         """Disconnects from neurostack server"""
         self.sio_neurostack.disconnect()
 
-    def send_train_data(self, uuid, eeg_data, p300):
+    def send_train_data(self, server_endpoint, uuid, eeg_data, label):
         """
         Sends training data to neurostack server
 
+        :param server_endpoint: server API's endpoint
         :param uuid: client's UUID
         :param eeg_data: one sample of EEG data to be used for training
-        :param p300: True if this data represents a p300 signal, else False
+        :param label: this data's label
         :returns: None
         """
         args = {
             'uuid': uuid,
             'data': eeg_data,
-            'p300': p300
+            'label': label
         }
-        self.sio_neurostack.emit("train_classifier", args, self.on_train_results)
+        self.sio_neurostack.emit(server_endpoint, args, self.on_train_results)
         self.sio_neurostack.wait_for_callbacks(seconds=1)
 
-    def send_predict_data(self, uuid, eeg_data):
+    def send_predict_data(self, server_endpoint, uuid, eeg_data):
         """
         Sneds prediction data to neurostack server
 
+        :param server_endpoint: server API's endpoint
         :param uuid: client's UUID
         :param eeg_data: one sample of EEG data that we want to predict for
         :returns: None
@@ -123,7 +125,24 @@ class Neurostack:
             'uuid': uuid,
             'data': eeg_data
         }
-        self.sio_neurostack.emit("retrieve_prediction_results", args, self.on_predict_results)
+        self.sio_neurostack.emit(server_endpoint, args, self.on_predict_results)
+        self.sio_neurostack.wait_for_callbacks(seconds=1)
+
+    def send_train_data_test(self, uuid, eeg_data, label):
+        """
+        Tests endpoint for sending training data to neurostack server
+
+        :param uuid: client's UUID
+        :param eeg_data: one sample of EEG data to be used for training
+        :param label: this data's label
+        :returns: None
+        """
+        args = {
+            'uuid': uuid,
+            'data': eeg_data,
+            'label': label
+        }
+        self.sio_neurostack.emit("test_train", args, self.print_results)
         self.sio_neurostack.wait_for_callbacks(seconds=1)
 
     def send_predict_data_test(self, uuid, eeg_data):
@@ -138,24 +157,7 @@ class Neurostack:
             'uuid': uuid,
             'data': eeg_data
         }
-        self.sio_neurostack.emit("retrieve_prediction_results_test", args, self.print_results)
-        self.sio_neurostack.wait_for_callbacks(seconds=1)
-
-    def send_train_data_test(self, uuid, eeg_data, p300):
-        """
-        Tests endpoint for sending training data to neurostack server
-
-        :param uuid: client's UUID
-        :param eeg_data: one sample of EEG data to be used for training
-        :param p300: True if this data represents a p300 signal, else False
-        :returns: None
-        """
-        args = {
-            'uuid': uuid,
-            'data': eeg_data,
-            'p300': p300
-        }
-        self.sio_neurostack.emit("train_classifier_test", args, self.print_results)
+        self.sio_neurostack.emit("test_predict", args, self.print_results)
         self.sio_neurostack.wait_for_callbacks(seconds=1)
 
     #
@@ -164,8 +166,12 @@ class Neurostack:
 
     def initialize_handlers(self):
         """Initialize handlers for client-side communication"""
-        self.sio_app.on("train", self.train_handler)
-        self.sio_app.on("predict", self.predict_handler)
+        self.sio_app.on("p300_train", self.p300_train_handler)
+        self.sio_app.on("p300_predict", self.p300_predict_handler)
+
+        self.sio_app.on("left_right_train", self.left_right_train_handler)
+        self.sio_app.on("left_right_predict", self.left_right_predict_handler)
+
         self.sio_app.on("generate_uuid", self.generate_uuid_handler)
 
     def run(self, host='localhost', port=8002):
@@ -179,14 +185,62 @@ class Neurostack:
         """
         self.sio_app_server.run(host=host, port=port)
 
-    async def train_handler(self, sid, args):
-        """Handler for passing training data to Neurostack"""
+    async def p300_train_handler(self, sid, args):
+        """P300 training handler"""
         args = json.loads(args)
-        uuid = args['uuid']
-        timestamp = args['timestamp']
-        p300 = args['p300']
-        # TODO: check type of p300 (I believe it has to be 0 or 1?)
 
+        await self.train_handler(
+            server_endpoint="p300_train",
+            uuid=args['uuid'],
+            timestamp=args['timestamp'],
+            label=args['p300']
+        )
+
+    async def p300_predict_handler(self, sid, args):
+        """P300 prediction handler"""
+        args = json.loads(args)
+
+        await self.predict_handler(
+            server_endpoint="p300_predict",
+            uuid=args['uuid'],
+            timestamp=args['timestamp']
+        )
+
+    async def left_right_train_handler(self, sid, args):
+        """Left-right training handler"""
+        args = json.loads(args)
+
+        await self.train_handler(
+            server_endpoint="left_right_train",
+            uuid=args['uuid'],
+            timestamp=args['timestamp'],
+            label=args['left']
+        )
+
+    async def left_right_predict_handler(self, sid, args):
+        """Left-right prediction handler"""
+        args = json.loads(args)
+
+        await self.predict_handler(
+            server_endpoint="left_right_predict",
+            uuid=args['uuid'],
+            timestamp=args['timestamp']
+        )
+
+    async def train_handler(self, server_endpoint, uuid, timestamp, label,
+                            window=0.75):
+        """
+        Handler for passing training data to Neurostack
+
+        TODO: something for sample rate
+
+        :param server_endpoint: Neurostack server API endpoint
+        :param uuid: client UUID
+        :param timestamp: timestamp of data we are interested in, in unix time
+        :param label: label for data
+        :param window: window of data we are interested in, in seconds
+        :return: None
+        """
         # create list for uuid if not done already
         self.train_results[uuid] = self.train_results.get(uuid, [])
 
@@ -195,15 +249,21 @@ class Neurostack:
 
         # Wait until the device has enough data (ie. the time slice is complete)
         # then take 100ms - 750ms window for training
-        while time.time() < timestamp + 0.75:
+        while time.time() < timestamp + window:
             time.sleep(.01)
 
+        # TODO: num_samples = window * sample rate
         timestamp -= self.devices[0].get_time_diff()
         data_dict = device.data_stream.get_eeg_data(start_time=timestamp + .1,
                                                     num_samples=128)
         data = list(data_dict.values())
 
-        self.send_train_data(uuid, data, p300)
+        self.send_train_data(
+            server_endpoint=server_endpoint,
+            uuid=uuid,
+            eeg_data=data,
+            label=label
+        )
 
         # wait for results
         while len(self.train_results[uuid]) == 0:
@@ -211,12 +271,19 @@ class Neurostack:
         result = self.train_results[uuid].pop(0)
         await self.sio_app.emit("train", result)
 
-    async def predict_handler(self, sid, args):
-        """Handler for passing prediction data to Neurostack"""
-        args = json.loads(args)
-        uuid = args['uuid']
-        timestamp = args['timestamp']
+    async def predict_handler(self, server_endpoint, uuid, timestamp,
+                              window=0.75):
+        """
+        Handler for passing prediction data to Neurostack
 
+        TODO: something for sample rate
+
+        :param server_endpoint: Neurostack server API endpoint
+        :param uuid: client UUID
+        :param timestamp: timestamp of data we are interested in, in unix time
+        :param window: window of data we are interested in, in seconds
+        :return: None
+        """
         # create list for uuid if not done already
         self.predict_results[uuid] = self.predict_results.get(uuid, [])
 
@@ -226,7 +293,7 @@ class Neurostack:
         # Wait until the device has enough data (ie. the time slice is complete)
         # then take 100ms - 750ms window for training. The window should
         # contain 0.65s * 256Hz = 166 samples.
-        while time.time() < timestamp + 0.75:
+        while time.time() < timestamp + window:
             time.sleep(.01)
 
         timestamp -= self.devices[0].get_time_diff()
@@ -234,12 +301,16 @@ class Neurostack:
                                                     num_samples=128)
         data = list(data_dict.values())
 
-        self.send_predict_data(uuid, data)
+        self.send_predict_data(
+            server_endpoint=server_endpoint,
+            uuid=uuid,
+            eeg_data=data
+        )
 
         # wait for results
         while len(self.predict_results[uuid]) == 0:
             time.sleep(.01)
-        result =  self.predict_results[uuid].pop(0)
+        result = self.predict_results[uuid].pop(0)
         await self.sio_app.emit("predict", result)
 
     async def generate_uuid_handler(self, sid, args):
