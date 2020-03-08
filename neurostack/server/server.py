@@ -65,7 +65,7 @@ class NeurostackServer:
         # load arguments, generate UUID if none is provided
         uuid = args['uuid'] if args['uuid'] != 'None' else generate_uuid()
         data = args['data']
-        left = args['left']
+        left = args['label']
 
         results = self.services['left_right'].train(uuid=uuid, data=data, left=left)
         return results
@@ -123,7 +123,7 @@ class NeurostackServer:
         # load arguments, generate UUID if none is provided
         uuid = args['uuid'] if args['uuid'] != 'None' else generate_uuid()
         data = args['data']
-        p300 = args['p300']
+        p300 = args['label']
 
         results = self.services['p300'].train(uuid=uuid, data=data, p300=p300)
         return results
