@@ -37,11 +37,10 @@ class P300Service(BaseService):
             # Note in Barachant's ipynb, 'erpcov_mdm' performed best. 'vect_lr' is the
             # universal one for EEG data.
 
-            # train
-            self.clf[uuid] = ml.ml_classifier(X_train, y_train, classifier=None, pipeline='vect_lr')
-            acc = self.clf[uuid].score(X_test, y_test)
-
-            self.save_classifier(uuid)
+            # train, score, and save
+            clf = ml.ml_classifier(X_train, y_train, classifier=None, pipeline='vect_lr')
+            acc = clf.score(X_test, y_test)
+            self.save_classifier(uuid, clf)
 
             results['acc'] = acc
 

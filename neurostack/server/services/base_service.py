@@ -42,34 +42,32 @@ class BaseService(ABC):
     #   Helper methods
     #
 
-    def save_classifier(self, uuid):
+    def save_classifier(self, uuid, model):
         """
-        Load classifier for client with given UUID into self.clf
+        Save classifier for client with given UUID into clf folder
 
         :param uuid: client UUID
-        :returns: True if classifier is successfully loaded, else False
+        :param model:
+        :return: None
         """
         if not os.path.exists('clfs'):
             os.makedirs('clfs')
 
-        if self.clf.get(uuid) is not None:
-            ml.save(f'clfs/{uuid}', self.clf[uuid])
-            return True
-
-        return False
+        self.clf[uuid] = model
+        ml.save(f'clfs/{uuid}', self.clf[uuid])
 
     def load_classifier(self, uuid):
         """
         Load classifier for client with given UUID into self.clf
 
         :param uuid: client UUID
-        :returns: True if classifier is successfully loaded, else False
+        :return: True if classifier is successfully loaded, else False
         """
         try:
             if self.clf.get(uuid) is None:
                 self.clf[uuid] = ml.load(f'clfs/{uuid}')
             return True
-            
+
         except FileNotFoundError:
             print(f'Cannot load classifier')
             return False

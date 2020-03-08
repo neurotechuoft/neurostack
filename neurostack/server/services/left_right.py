@@ -100,7 +100,7 @@ class LeftRightService(BaseService):
             # train, score, and save model
             clf.fit(X_train, y_train)
             score = clf.score(X_test, y_test)
-            self.save_classifier(uuid)
+            self.save_classifier(uuid, clf)
 
             results['acc'] = score
 
