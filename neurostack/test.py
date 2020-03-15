@@ -47,10 +47,10 @@ socket_client.wait(seconds=1)
 # test streaming raw data
 args = json.dumps({'uuid': uuid})
 socket_client.emit("start_streaming_raw_data", args)
-socket_client.wait(seconds=5)
+socket_client.wait()
 
 # # test stop streaming raw data
-# socket_client.emit("stop_streaming_raw_data", args)
-# socket_client.wait(seconds=5)
+socket_client.emit("stop_streaming_raw_data", args)
+socket_client.wait(seconds=5)
 
 socket_client.disconnect()
