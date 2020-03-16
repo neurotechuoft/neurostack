@@ -1,6 +1,21 @@
+
 # Neurostack
 
 Streaming brain waves to machine learning services, made easy.
+
+## Installation
+
+Neurostack runs in Python 3.6. We recommend working in a virtual environment (see [Conda](https://www.anaconda.com/) or [venv](https://docs.python.org/3/library/venv.html)).
+
+To install dependencies for the Neurostack client, run
+```bash
+pip install -r requirements.txt
+```
+
+To install dependencies for the Neurostack server, run
+```bash
+pip install -r server_requirements.txt
+```
 
 ## Usage
 
@@ -155,3 +170,4 @@ Parameters:
 Emits an event called `train` with arguments:
 > `uuid`: UUID of caller  
 `acc`: accuracy of current classifier. This is either None/null (not enough training samples for training), or a number between 0 and 1.
+
