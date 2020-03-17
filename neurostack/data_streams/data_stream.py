@@ -188,7 +188,8 @@ class DataStream:
         """
         Gets (a copy of the) latest data entry from channels
 
-        :param channels:
+        :param channels: names of channels to get data from, defaults to
+                         _eeg_channel_names
         :return: a list of data if there is only 1 channel given, else a dict
         with channel names as keys and data as values.
         """
@@ -257,3 +258,7 @@ class DataStream:
     def list_channels(self):
         """Returns a list of all the channels"""
         return list(self.channels.keys())
+
+    def get_eeg_channels(self):
+        """Returns a list of the EEG channel names"""
+        return self._eeg_channel_names

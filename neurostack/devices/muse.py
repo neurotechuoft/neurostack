@@ -11,7 +11,6 @@ class Muse(Device):
 
     def __init__(self, device_id=None):
         super().__init__(device_id)
-        self.data_stream = DataStream()
 
         # difference between unix and muse time
         self.time_diff = 0
