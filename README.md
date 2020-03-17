@@ -1,3 +1,4 @@
+
 # Neurostack
 
 Streaming brain waves to machine learning services, made easy.
@@ -102,17 +103,35 @@ Returns:
 
 <br/>
 
+#### start_streaming_raw_data
+
+Start streaming raw EEG data. Applications that want to use this should listen for the event `raw_data`, which Neurostack will continuously emit to.
+
+Parameters: 
+>`uuid`: UUID of whoever is wants to stream raw data. This will open up a raw data stream for this specific user.
+
+<br/>
+
+#### stop_streaming_raw_data
+
+Stop streaming raw EEG data. 
+
+Parameters: 
+>`uuid`: UUID of whoever is wants to stop streaming raw data.
+
+<br/>
+
 #### p300_predict
 Make a prediction for whether P300 occurs at a timestamp.
 
 Parameters:
 > `uuid`: UUID of whoever is making a prediction. This will determine which classifier we will load up and use.  
-`timestamp`: timestamp of chunk of data
+>`timestamp`: timestamp of chunk of data
 
 Emits an event called `predict` with arguments:
 > `uuid`: UUID of caller  
-`p300`: either True or False, predicting whether there is a P300 ERP  
-`score`: a value from 0 to 1 denoting the confidence in the prediction
+>`p300`: either True or False, predicting whether there is a P300 ERP  
+>`score`: a value from 0 to 1 denoting the confidence in the prediction
 
 <br/>
 
@@ -121,8 +140,8 @@ Give a training example to the P300 classifier.
 
 Parameters:
 > `uuid`: UUID of whoever is making a prediction. This will determine which classifier we will load up and use.  
-`timestamp`: timestamp of chunk of data  
-`p300`: either True or False (or 1 or 0), depending on whether there should be a P300 ERP
+>`timestamp`: timestamp of chunk of data  
+>`p300`: either True or False (or 1 or 0), depending on whether there should be a P300 ERP
 
 Emits an event called `train` with arguments:
 > `uuid`: UUID of caller  
@@ -154,4 +173,4 @@ Parameters:
 
 Emits an event called `train` with arguments:
 > `uuid`: UUID of caller  
-`acc`: accuracy of current classifier. This is either None/null (not enough training samples for training), or a number between 0 and 1.
+>`acc`: accuracy of current classifier. This is either None/null (not enough training samples for training), or a number between 0 and 1.
