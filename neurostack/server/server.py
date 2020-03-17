@@ -1,17 +1,14 @@
-from sanic import Sanic
-import socketio
-from server import ml
-import numpy as np
-from sklearn.model_selection import train_test_split
-from utils import generate_uuid
-
-# for testing
-import random
-
+import binascii
+import hashlib
 import json
 import os
-import hashlib
-import binascii
+import random
+import socketio
+from sanic import Sanic
+
+from utils import generate_uuid
+from server.services.left_right import LeftRightService
+from server.services.p300 import P300Service
 
 
 def hash_password(password):
@@ -35,50 +32,74 @@ def verify_password(stored_password, provided_password):
     return pwdhash == stored_password
 
 
-class P300Service:
+class NeurostackServer:
     def __init__(self):
         self.sio = socketio.AsyncServer(async_mode='sanic')
         self.app = Sanic()
         self.sio.attach(self.app)
 
-        self.clf = {}       # classifiers with UUID as key
-        self.inputs = {}    # training data with UUID as key
-        self.targets = {}
+        self.services = {}
 
-    def save_classifier(self, uuid):
+    async def left_right_train(self, sid, args):
         """
-        Load classifier for client with given UUID into self.clf
+        Endpoint for training left right classifier
 
-        :param uuid: client UUID
-        :returns: True if classifier is successfully loaded, else False
+        :param sid: Socket IO session ID, automatically given by connection
+        :param args: arguments from client. This should be in the format
+                     {
+                         'uuid': client UUID
+                         'data': EEG data to use for training
+                         'left': True or False
+                     }
+        :returns: None if there is not enough data for training, or the current
+                  model accuracy in the format
+                  {
+                      'uuid': client UUID
+                      'acc': current training accuracy
+                  }
         """
-        if not os.path.exists('clfs'):
-            os.makedirs('clfs')
+        # initialize service if it does not exist already
+        if self.services.get('left_right') is None:
+            self.services['left_right'] = LeftRightService()
 
-        if self.clf[uuid] is not None:
-            ml.save(f'clfs/{uuid}', self.clf[uuid])
-            return True
+        # load arguments, generate UUID if none is provided
+        uuid = args['uuid'] if args['uuid'] != 'None' else generate_uuid()
+        data = args['data']
+        left = args['label']
 
-        return False
+        results = self.services['left_right'].train(uuid=uuid, data=data, left=left)
+        return results
 
-    def load_classifier(self, uuid):
+    async def left_right_predict(self, sid, args):
         """
-        Load classifier for client with given UUID into self.clf
+        Endpoint for making predictions with trained p300 classifier
 
-        :param uuid: client UUID
-        :returns: True if classifier is successfully loaded, else False
+        :param sid: Socket IO session ID, automatically given by connection
+        :param args: arguments from client. This should be in the format
+                     {
+                         'uuid': client UUID
+                         'data': EEG data to make prediction on
+                     }
+        :returns: prediction results in the format
+                  {
+                      'uuid': client UUID
+                      'left': True or False result of model prediction
+                  }
         """
-        try:
-            if self.clf.get(uuid) is None:
-                self.clf[uuid] = ml.load(f'clfs/{uuid}')
-            return True
-        except FileNotFoundError:
-            print(f'Cannot load classifier')
-            return False
+        # initialize service if it does not exist already
+        if self.services.get('left_right') is None:
+            self.services['left_right'] = LeftRightService()
 
-    async def train_classifier(self, sid, args):
+        # load arguments, generate UUID if none is provided
+        uuid = args['uuid'] if args['uuid'] != 'None' else generate_uuid()
+        data = args['data']
+
+        results = self.services['left_right'].predict(uuid=uuid, data=data)
+        return results
+
+    async def p300_train(self, sid, args):
         """
-        Endpoint for training classifier--given enough data, will train
+        Endpoint for training p300--given enough data, will train
         classifier
 
         :param sid: Socket IO session ID, automatically given by connection
@@ -94,47 +115,22 @@ class P300Service:
                       'uuid': client UUID
                       'acc': current training accuracy
                   }
-
         """
+        # initialize service if it does not exist already
+        if self.services.get('p300') is None:
+            self.services['p300'] = P300Service()
+
         # load arguments, generate UUID if none is provided
         uuid = args['uuid'] if args['uuid'] != 'None' else generate_uuid()
         data = args['data']
-        p300 = args['p300']
+        p300 = args['label']
 
-        # initialize if empty
-        self.inputs[uuid] = self.inputs.get(uuid, [])
-        self.targets[uuid] = self.targets.get(uuid, [])
-
-        self.inputs[uuid].append(np.array(data))
-        self.targets[uuid].append(np.array(p300))
-
-        results = {
-            'uuid': uuid,
-            'acc': None
-        }
-
-        if len(self.targets[uuid]) % 10 == 0 and len(self.targets[uuid]) >= 10:
-            X = np.array(self.inputs[uuid])
-            y = np.array(self.targets[uuid])
-
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
-
-            # Note in Barachant's ipynb, 'erpcov_mdm' performed best. 'vect_lr' is the
-            # universal one for EEG data.
-
-            # train
-            self.clf[uuid] = ml.ml_classifier(X_train, y_train, classifier=None, pipeline='vect_lr')
-            acc = self.clf[uuid].score(X_test, y_test)
-
-            self.save_classifier(uuid)
-
-            results['acc'] = acc
-
+        results = self.services['p300'].train(uuid=uuid, data=data, p300=p300)
         return results
 
-    async def retrieve_prediction_results(self, sid, args):
+    async def p300_predict(self, sid, args):
         """
-        Endpoint for making predictions with trained classifier
+        Endpoint for making predictions with trained p300 classifier
 
         :param sid: Socket IO session ID, automatically given by connection
         :param args: arguments from client. This should be in the format
@@ -149,35 +145,22 @@ class P300Service:
                       'score': confidence value of prediction between 0 and 1
                   }
         """
+        # initialize service if it does not exist already
+        if self.services.get('p300') is None:
+            self.services['p300'] = P300Service()
+
         # load arguments, generate UUID if none is provided
         uuid = args['uuid'] if args['uuid'] != 'None' else generate_uuid()
         data = args['data']
 
-        # prepare data for prediction
-        data = np.array(data)
-        data = np.expand_dims(data, axis=0)
-
-        # load classifier if not already loaded
-        if self.load_classifier(uuid):
-            p300 = self.clf[uuid].predict(data)[0]
-        else:
-            return 'Cannot load classifier and make prediction'
-
-        # currently we do not have a confidence method
-        score = 1
-
-        results = {
-            'uuid': uuid,
-            'p300': int(p300),
-            'score': random.random()
-        }
+        results = self.services['p300'].predict(uuid=uuid, data=data)
         return results
 
     #
     # For testing
     #
 
-    async def retrieve_prediction_results_test(self, sid, args):
+    async def test_predict(self, sid, args):
         """
         Tests endpoint for making predictions with trained classifier
 
@@ -199,7 +182,7 @@ class P300Service:
         }
         return results
 
-    async def train_classifier_test(self, sid, args):
+    async def test_train(self, sid, args):
         """
         Tests endpoint for training classifier
 
@@ -223,9 +206,12 @@ class P300Service:
     def initialize_handlers(self):
         """Initialize handlers for server"""
         # train classifier and predict
-        self.sio.on("retrieve_prediction_results", self.retrieve_prediction_results)
-        self.sio.on("train_classifier", self.train_classifier)
+        self.sio.on("p300_train", self.p300_train)
+        self.sio.on("p300_predict", self.p300_predict)
+
+        self.sio.on("left_right_train", self.left_right_train)
+        self.sio.on("left_right_predict", self.left_right_predict)
 
         # for testing
-        self.sio.on("predict_test", self.retrieve_prediction_results_test)
-        self.sio.on("train_test", self.train_classifier_test)
+        self.sio.on("test_train", self.test_train)
+        self.sio.on("test_predict", self.test_predict)
