@@ -54,9 +54,9 @@ socket_client = SocketIO('localhost', 8002)
 socket_client.connect()
 
 # initialize handlers
-socket_client.on('uuid', print_results)
-socket_client.on('train', print_results)
-socket_client.on('predict', print_results)
+socket_client.on('uuid', callback_function)
+socket_client.on('train', callback_function)
+socket_client.on('predict', callback_function)
 ```
 
 To generate a UUID:
