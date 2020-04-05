@@ -46,10 +46,10 @@ import time
 import json
 
 
-def callback_function(*args):
+def print_results(*args):
     print(args)
 
-# p300 server running on localhost:8002
+# server running on localhost:8002
 socket_client = SocketIO('localhost', 8002)
 socket_client.connect()
 
