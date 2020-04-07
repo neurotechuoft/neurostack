@@ -1,6 +1,6 @@
 from client.devices.muse import Muse
 from socketIO_client import SocketIO
-from utils import generate_uuid
+from utils.utils import generate_uuid
 from sanic import Sanic
 
 import argparse
@@ -37,7 +37,32 @@ class Neurostack:
     # Methods for handling devices
     #
 
-    def start(self, list_of_devices=None):
+    def connect_devices(self, list_of_devices=None, use_fake_data_list=None):
+        """
+        Open connection to devices
+
+        :param list_of_devices: [Device] List of devices to connect to. If none, connect to all of the devices in self.devices
+        :param use_fake_data_list: List of True or False or None that matches with the list of devices for whether stream fake data when connecting
+
+        :return: None
+        """
+        if list_of_devices is None:
+            devices_to_start = self.devices
+        else:
+            devices_to_start = list_of_devices
+
+        if use_fake_data_list is None or not use_fake_data_list:
+            use_fake_data_list = [None for _ in range(len(list_of_devices))]
+
+        # connect to devices (and use fake data when applicable)
+        assert len(devices_to_start) == len(use_fake_data_list)
+        for i in range(len(devices_to_start)):
+            if use_fake_data_list[i] is not None:
+                devices_to_start[i].connect(use_fake_data=use_fake_data_list[i])
+            else:
+                devices_to_start[i].connect()
+
+    def start_devices(self, list_of_devices=None):
         """
         Start streaming EEG from device, and publish data to subscribers.
 
@@ -53,7 +78,7 @@ class Neurostack:
         for device in devices_to_start:
             device.start()
 
-    def stop(self, list_of_devices=None):
+    def stop_devices(self, list_of_devices=None):
         """
         Stop streaming EEG data from device, and stop publishing data to
         subscribers. Connection to device remains intact, and device is not
@@ -71,7 +96,7 @@ class Neurostack:
         for device in devices_to_start:
             device.stop()
 
-    def shutdown(self, list_of_devices=None):
+    def shutdown_devices(self, list_of_devices=None):
         """
         Close connection to device, WebSocket connections to publishers, and tag sources.
 

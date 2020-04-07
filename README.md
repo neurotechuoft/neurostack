@@ -19,21 +19,22 @@ pip install -r server_requirements.txt
 
 ## Usage
 
-To run the Neurostack server, use `python start_server.py`. It will run on localhost:8001.
+To run the Neurostack server, use `python server/start_server.py`. It will run on localhost:8001.
 
 __Neurostack server is currently running on `neurostack.neurotechuoft.com` on port 8001, so if you do not wish to run the server locally, you may directly connect to our server.__
 
-To run the Neurostack client from the command line, use `python neurostack.py`.
+To run the Neurostack client from the command line, use `python client/start_client.py`.
 
-It takes three optional arguments:
+It takes one mandatory argument as well as three optional arguments:
 
+> `--devices`: Names of devices to add. Can choose from "muse" or "openbci", and can select multiple devices. \
 > `--address`: ip: port to run Neurostack client on. The default is localhost:8002.\
 >`--server_address`: ip: port for Neurostack server to connect to.\
->`--use_fake_data`: Use flag to generate fake data.
+>`--use_fake_data`: Give a "true", "false", or "none" per device for whether it should stream fake data or not.
 
 Example Usage:
 
->`python neurostack.py --server_address neurostack.neurotechuoft.com:8001 --address localhost:8002 --use_fake_data`
+>`python start_client.py muse --server_address neurostack.neurotechuoft.com:8001 --address localhost:8002 --use_fake_data true`
 
 
 ## Training and making predictions
@@ -121,16 +122,16 @@ Returns:
 
 Start streaming raw EEG data. Applications that want to use this should listen for the event `raw_data`, which Neurostack will continuously emit to.
 
-Parameters: 
+Parameters:
 >`uuid`: UUID of whoever is wants to stream raw data. This will open up a raw data stream for this specific user.
 
 <br/>
 
 #### stop_streaming_raw_data
 
-Stop streaming raw EEG data. 
+Stop streaming raw EEG data.
 
-Parameters: 
+Parameters:
 >`uuid`: UUID of whoever is wants to stop streaming raw data.
 
 <br/>
