@@ -111,3 +111,6 @@ playground/.DS_Store
 .DS_Store
 .DS_Store
 playground/.DS_Store
+
+# visual studio code stuff
+.vscode/*
