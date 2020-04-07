@@ -1,6 +1,6 @@
-from client.devices.muse import Muse
-from socketIO_client import SocketIO
 from utils.utils import generate_uuid
+
+from socketIO_client import SocketIO
 from sanic import Sanic
 
 import argparse
@@ -52,7 +52,7 @@ class Neurostack:
             devices_to_start = list_of_devices
 
         if use_fake_data_list is None or not use_fake_data_list:
-            use_fake_data_list = [None for _ in range(len(list_of_devices))]
+            use_fake_data_list = [None for _ in range(len(devices_to_start))]
 
         # connect to devices (and use fake data when applicable)
         assert len(devices_to_start) == len(use_fake_data_list)

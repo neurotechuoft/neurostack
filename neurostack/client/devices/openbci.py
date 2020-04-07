@@ -1,5 +1,3 @@
-import openbci
-
 from devices.device import Device
 
 
@@ -12,7 +10,7 @@ class OpenBCI(Device):
     def available_devices():
         """
         Returns list of available OpenBCI devices by device name
-        
+
         Works on Linux, untested for other OS
         """
         # devs = usb.core.find(find_all=True, idVendor=0x0403, idProduct=0x6015)
@@ -34,39 +32,39 @@ class OpenBCI(Device):
         :param device_id:
         :return:
         """
-        self.openbci_cyton = openbci.OpenBCICyton()
+        pass
 
     def start(self) -> None:
         """
         Start streaming EEG from device, and publish data to subscribers.
-    
+
         :return:
         """
-        self.openbci_cyton.start_streaming(callback)
+        pass
 
     def stop(self) -> None:
         """
         Stop streaming EEG data from device, and stop publishing data to
         subscribers. Connection to device remains intact, and device is not
         turned off.
-    
+
         :return:
         """
-        self.openbci_cyton.stop()
+        pass
 
     def shutdown(self) -> None:
         """
         Close connection to device, WebSocket connections to publishers, and tag
         sources.
-    
+
         :return:
         """
-        self.openbci_cyton.disconnect()
+        pass
 
     def get_info(self) -> None:
         """
-        Get information about the device including device type, connection type, electrode names, device type, stream time, etc... 
-    
+        Get information about the device including device type, connection type, electrode names, device type, stream time, etc...
+
         :return:
         """
         pass

@@ -61,15 +61,15 @@ class Muse(Device):
     # Public device methods
     #
 
-    def connect(self, fake_data=False):
+    def connect(self, use_fake_data=False):
         """
         Creates data streams if there are none and connects to EEG stream
-        (since that is the one that is immediately needed for use). If fake_data
+        (since that is the one that is immediately needed for use). If use_fake_data
         is True, then start a separate thread that generates fake data instead
         of connecting to a muse.
         """
         # create thread that runs something which continuously streams data
-        if fake_data:
+        if use_fake_data:
             eeg_data_thread = threading.Thread(
                 target=self._create_fake_eeg_stream, name='fake muse')
             eeg_data_thread.daemon = True

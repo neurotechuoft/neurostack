@@ -1,6 +1,6 @@
-from client.neurostack import Neurostack
-from client.devices.muse import Muse
-from client.devices.openbci import OpenBCI
+from neurostack import Neurostack
+from devices.muse import Muse
+from devices.openbci import OpenBCI
 
 import argparse
 
@@ -23,16 +23,20 @@ args = parser.parse_args()
 
 # convert use_fake_data argument to True, False, or None
 use_fake_data = []
-for arg in args.use_fake_data:
-    if arg.lower() in ('yes', 'true', 't', 'y', '1'):
-        use_fake_data.append(True)
-    elif arg.lower() in ('no', 'false', 'f', 'n', '0'):
-        use_fake_data.append(False)
-    else:
-        use_fake_data.append(None)
+if args.use_fake_data is not None:
+    for arg in args.use_fake_data:
+        if arg.lower() in ('yes', 'true', 't', 'y', '1'):
+            use_fake_data.append(True)
+        elif arg.lower() in ('no', 'false', 'f', 'n', '0'):
+            use_fake_data.append(False)
+        else:
+            use_fake_data.append(None)
 
 # decide which devices Neurostack is using
 devices = []
+if args.devices is None:
+    raise Exception("No devices selected!")
+
 for device in args.devices:
     if device == 'muse':
         devices.append(Muse())
