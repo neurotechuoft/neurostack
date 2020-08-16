@@ -25,6 +25,7 @@ class P300Service(BaseService):
 
         results = {
             'uuid': uuid,
+            'timestamp': timestamp,
             'acc': None
         }
 
@@ -73,6 +74,7 @@ class P300Service(BaseService):
         score = 1
         results = {
             'uuid': uuid,
+            'timestamp': timestamp,
             'p300': int(p300),
             'score': score
         }
