@@ -144,6 +144,7 @@ Parameters:
 
 Emits an event called `predict` with arguments:
 > `uuid`: UUID of caller  
+> `timestamp`: timestamp of chunk of data
 >`p300`: either True or False, predicting whether there is a P300 ERP  
 >`score`: a value from 0 to 1 denoting the confidence in the prediction
 
@@ -158,8 +159,9 @@ Parameters:
 >`p300`: either True or False (or 1 or 0), depending on whether there should be a P300 ERP
 
 Emits an event called `train` with arguments:
-> `uuid`: UUID of caller  
-`acc`: accuracy of current classifier. This is either None/null (not enough training samples for training), or a number between 0 and 1.
+> `uuid`: UUID of caller 
+> `timestamp`: timestamp of chunk of data 
+> `acc`: accuracy of current classifier. This is either None/null (not enough training samples for training), or a number between 0 and 1.
 
 <br/>
 
@@ -168,12 +170,13 @@ Make a prediction for whether the user is using their left or right brain at a t
 
 Parameters:
 > `uuid`: UUID of whoever is making a prediction. This will determine which classifier we will load up and use.  
-`timestamp`: timestamp of chunk of data
+> `timestamp`: timestamp of chunk of data
 
 Emits an event called `predict` with arguments:
 > `uuid`: UUID of caller  
-`left`: either True or False, predicting whether the user is using their left (True) or right (False) brain  
-`score`: a value from 0 to 1 denoting the confidence in the prediction
+> `timestamp`: timestamp of chunk of data
+> `left`: either True or False, predicting whether the user is using their left (True) or right (False) brain  
+> `score`: a value from 0 to 1 denoting the confidence in the prediction
 
 <br/>
 
@@ -182,9 +185,10 @@ Give a training example to the left/right brain classifier.
 
 Parameters:
 > `uuid`: UUID of whoever is making a prediction. This will determine which classifier we will load up and use.  
-`timestamp`: timestamp of chunk of data  
-`left`: True if using left brain, or False if using right brain
+> `timestamp`: timestamp of chunk of data  
+> `left`: True if using left brain, or False if using right brain
 
 Emits an event called `train` with arguments:
 > `uuid`: UUID of caller  
->`acc`: accuracy of current classifier. This is either None/null (not enough training samples for training), or a number between 0 and 1.
+> `timestamp`: timestamp of chunk of data
+> `acc`: accuracy of current classifier. This is either None/null (not enough training samples for training), or a number between 0 and 1.

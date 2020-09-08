@@ -77,6 +77,7 @@ class LeftRightService(BaseService):
 
         results = {
             'uuid': uuid,
+            'timestamp': timestamp,
             'acc': None
         }
 
@@ -124,9 +125,10 @@ class LeftRightService(BaseService):
         else:
             return 'Cannot load classifier and make prediction'
 
-        # currently we do not have a confidence method
+        # TODO: include 'score' (currently we do not have a confidence method)
         results = {
             'uuid': uuid,
+            'timestamp': timestamp,
             'left': left
         }
         return results
