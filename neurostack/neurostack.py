@@ -10,6 +10,7 @@ import socketio
 import time
 
 
+#Todo: switch Sanic to flask
 class Neurostack:
 
     def __init__(self, devices=None):
