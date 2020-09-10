@@ -106,8 +106,5 @@ venv.bak/
 
 # mypy
 .mypy_cache/
-playground/.DS_Store
-playground/.DS_Store
-.DS_Store
 .DS_Store
 playground/.DS_Store
