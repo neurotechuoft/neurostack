@@ -6,6 +6,8 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.svm import SVC
+from datetime import datetime
+
 
 from server.services.base_service import BaseService
 
@@ -69,11 +71,13 @@ class LeftRightService(BaseService):
         :returns: The current model accuracy in the below format. If there is not
                   enough data, then the 'acc' field will be None (model not trained)
                   {
-                      'uuid': client UUID
+                      'uuid': client UUID,
+                      'timestamp': Timestamp of current time,
                       'acc': current training accuracy
                   }
         """
         self.save_inputs(uuid, data, left)
+        timestamp = datetime.now().strftime("%H:%M:%S")
 
         results = {
             'uuid': uuid,

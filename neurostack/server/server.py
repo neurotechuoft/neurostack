@@ -42,7 +42,8 @@ class NeurostackServer:
 
     async def left_right_train(self, sid, args):
         """
-        Endpoint for training left right classifier
+        Endpoint for training left right classifier for detecting motor imagery
+        of left vs right hand
 
         :param sid: Socket IO session ID, automatically given by connection
         :param args: arguments from client. This should be in the format
@@ -61,11 +62,10 @@ class NeurostackServer:
         # initialize service if it does not exist already
         if self.services.get('left_right') is None:
             self.services['left_right'] = LeftRightService()
-
         # load arguments, generate UUID if none is provided
         uuid = args['uuid'] if args['uuid'] != 'None' else generate_uuid()
         data = args['data']
-        left = args['label']
+        left = args['left']
 
         results = self.services['left_right'].train(uuid=uuid, data=data, left=left)
         return results
