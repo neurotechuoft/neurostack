@@ -4,7 +4,7 @@ Streaming brain waves to machine learning services, made easy.
 
 ## Installation
 
-Neurostack runs in Python 3.6. We recommend working in a virtual environment (see [Conda](https://www.anaconda.com/) or [venv](https://docs.python.org/3/library/venv.html)).
+Neurostack runs in Python 3.6, but we plan to update it to support new Python versions. We recommend working in a virtual environment (see [Conda](https://www.anaconda.com/) or [venv](https://docs.python.org/3/library/venv.html)).
 
 For users who want to connect to the server that is already running in the cloud, or for users who do not need machine learning services (Such as those who only want to stream raw EEG data from the headset) only `requirements.txt` is needed.
 To install dependencies for the Neurostack client, run
