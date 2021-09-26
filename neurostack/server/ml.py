@@ -1,4 +1,4 @@
-"""Contains functions for training, loading, and predicting with a LDA classifier."""
+"""ML script with functions for training, loading, and predicting with a LDA classifier."""
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.pipeline import make_pipeline
 

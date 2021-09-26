@@ -13,7 +13,7 @@ import time
 #Todo: switch Sanic to flask
 class Neurostack:
 
-    def __init__(self, devices=None):
+    def __init__(self, devices=None):  # devices is one of the folders, arguments
         """
         Initialize a connection with an EEG device, and sets up an
         asynchronous connection with subscribers passed in.

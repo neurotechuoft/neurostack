@@ -1,3 +1,6 @@
+# This script is just a template for the 'real' device scripts, muse.py, openbci.py.
+
+
 from abc import ABC, abstractmethod
 
 from data_streams.data_stream import DataStream

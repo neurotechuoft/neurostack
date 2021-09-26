@@ -2,10 +2,10 @@
 LSL-like object to stream data to multiple channels. Some code and helper
 methods taken from https://github.com/kaczmarj/rteeg
 """
-import numpy as np
+import numpy as np  # unused?
 import pylsl
 import threading
-import copy
+import copy  # unused?
 
 
 def look_for_eeg_stream():

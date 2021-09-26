@@ -1,1 +1,1 @@
-from data_streams.data_stream import DataStream
+from data_stream import DataStream
