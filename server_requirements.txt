@@ -17,7 +17,7 @@ kiwisolver==1.1.0
 matplotlib==3.2.0
 mne==0.19.2
 multidict==4.7.5
-numpy==1.18.1
+numpy==1.22.0
 pandas==1.0.2
 pylsl==1.13.1
 pyparsing==2.4.6
